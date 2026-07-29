@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카카오 알림톡 템플릿 신청서</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Pretendard', -apple-system, sans-serif; }
+        body { background-color: #f4f5f7; margin: 0; padding: 20px; color: #333; }
+        .wrapper { display: flex; max-width: 1150px; margin: 0 auto; gap: 30px; align-items: flex-start; }
+        
+        /* 왼쪽 입력 폼 */
+        .form-container { flex: 1; background: #fff; padding: 28px; border-radius: 8px; border: 1px solid #e1e4e8; box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
+        .form-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+        .form-row:last-child { border-bottom: none; }
+        .label-col { width: 130px; font-weight: 700; font-size: 13px; color: #222; flex-shrink: 0; }
+        .req { color: #e53e3e; }
+        .input-col { flex: 1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        
+        input[type="text"], select, textarea { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; outline: none; }
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: #3b82f6; }
+        textarea { height: 100px; resize: vertical; line-height: 1.5; }
+        
+        .radio-group, .checkbox-group { display: flex; gap: 16px; align-items: center; font-size: 13px; }
+        .radio-group label, .checkbox-group label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        
+        .char-limit { font-size: 12px; color: #888; white-space: nowrap; }
+        .sub-desc { font-size: 11px; color: #888; margin-top: 4px; }
+        
+        .dynamic-input-box { width: 100%; margin-top: 8px; display: none; }
+        
+        /* 아이템 하이라이트 테이블 스타일 */
+        .highlight-table { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; font-size: 13px; }
+        .highlight-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; width: 100px; text-align: center; color: #333; font-weight: 600; }
+        .highlight-table td { border: 1px solid #e2e8f0; padding: 8px 10px; background: #fff; }
+
+        /* 버튼 설정 동적 영역 스타일링 */
+        .btn-setting-box { width: 100%; margin-top: 8px; display: none; }
+        .btn-item-card { border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 10px; background: #fff; padding: 10px; position: relative; }
+        .btn-main-inputs { display: flex; gap: 8px; align-items: center; }
+        .btn-type-select { width: 140px; background-color: #fff; cursor: pointer; }
+        .btn-name-wrap { flex: 1; display: flex; align-items: center; border: 1px solid #d1d5db; border-radius: 4px; padding-right: 8px; background: #fff; }
+        .btn-name-wrap input, .btn-name-wrap select { border: none !important; padding: 7px 10px; }
+        .btn-del-btn { background: #fff; border: 1px solid #d1d5db; color: #888; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+        .btn-del-btn:hover { background: #f3f4f6; color: #333; }
+        
+        .btn-sub-inputs { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .btn-sub-inputs input { width: 100%; }
+        .btn-info-text { font-size: 11px; color: #888; margin-top: 6px; line-height: 1.4; white-space: pre-line; }
+
+        .add-btn-trigger { background: #fff; border: 1px solid #3b82f6; color: #3b82f6; width: 100%; padding: 8px; cursor: pointer; font-size: 13px; font-weight: 600; border-radius: 4px; text-align: center; }
+        .add-btn-trigger:hover { background: #eff6ff; }
+
+        /* 이미지 특화 버튼 및 첨부파일 배지 스타일 */
+        .img-action-btn { background: #4a5568; color: #fff; border: none; padding: 7px 14px; font-size: 12px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; font-weight: 500; }
+        .img-action-btn:hover { background: #374151; }
+        .btn-blue { background-color: #3b82f6; }
+        .btn-blue:hover { background-color: #2563eb; }
+        
+        .attached-file-badge { display: none; align-items: center; gap: 6px; background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; font-size: 12px; color: #334155; }
+        .btn-img-remove { background: none; border: none; color: #94a3b8; font-weight: bold; cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; }
+        .btn-img-remove:hover { color: #ef4444; }
+
+        /* 대표링크 테이블 스타일 */
+        .link-table { width: 100%; border-collapse: collapse; margin-top: 8px; border: 1px solid #e2e8f0; font-size: 13px; }
+        .link-table th { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 12px; width: 110px; text-align: center; color: #475569; font-weight: 500; }
+        .link-table td { border: 1px solid #e2e8f0; padding: 6px 10px; background: #fff; }
+        .link-table input[type="text"] { border: 1px solid #cbd5e1; height: 34px; border-radius: 2px; }
+
+        .submit-btn { width: 100%; background: #3b82f6; color: white; border: none; padding: 14px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-top: 20px; }
+        .submit-btn:hover { background: #2563eb; }
+
+        /* 미리보기 영역 */
+        .preview-container { width: 310px; flex-shrink: 0; position: sticky; top: 20px; }
+        .phone-mockup { width: 100%; height: 644px; background: #fff; border: 8px solid #222; border-radius: 34px; padding: 30px 11px 13px 11px; box-shadow: 0 12px 24px rgba(0,0,0,0.15); position: relative; display: flex; flex-direction: column; }
+        .phone-mockup::before { content: ''; position: absolute; top: 13px; left: 50%; transform: translateX(-50%); width: 50px; height: 4px; background: #222; border-radius: 10px; }
+        
+        .chat-screen { background: #b2c7da; border-radius: 12px; padding: 14px 10px 14px 12px; height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-gutter: stable; }
+        .profile-area { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .profile-icon { width: 28px; height: 28px; background: #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .profile-icon svg { fill: #ffffff; width: 18px; height: 18px; }
+        
+        .chat-bubble { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 10.5px; overflow: visible; position: relative; }
+        
+        .bubble-header { 
+            background: #ffe800; 
+            padding: 8px 10px; 
+            font-weight: bold; 
+            color: #000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            position: relative;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        
+        .bubble-header .kakao-badge { 
+            position: absolute;
+            top: -7px;
+            right: -5px;
+            width: 22px;
+            height: 22px;
+            background-color: #2b2b2b;
+            color: #ffffff;
+            border-radius: 50%;
+            font-size: 7px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            letter-spacing: -0.3px;
+            z-index: 10;
+        }
+
+        /* 이미지 미리보기 영역 */
+        .bubble-img-box { width: 100%; height: 135px; background: #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #9ca3af; border-bottom: 1px solid #f0f0f0; }
+        .bubble-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .bubble-img-box svg { width: 30px; height: 30px; fill: #d1d5db; margin-bottom: 5px; }
+
+        /* 헤더 미리보기 영역 */
+        .bubble-header-title { padding: 10px 12px 4px 12px; font-weight: bold; font-size: 13px; color: #111; word-break: break-all; border-bottom: 1px solid #f0f0f0; }
+
+        /* 아이템 하이라이트 미리보기 영역 */
+        .bubble-item-highlight { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .item-hl-text { flex: 1; min-width: 0; }
+        .item-hl-title { font-size: 13px; font-weight: 800; color: #111; word-break: break-all; line-height: 1.3; }
+        .item-hl-desc { font-size: 10.5px; color: #777; margin-top: 4px; word-break: break-all; }
+        .item-hl-thumb { width: 40px; height: 40px; background: #d1d5db; border-radius: 6px; flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .item-hl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 아이템 리스트 입력 카드 스타일 */
+        .item-list-card { border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
+        .item-list-field { margin-bottom: 8px; }
+        .item-list-field:last-child { margin-bottom: 0; }
+        .item-list-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .item-list-label { font-size: 12px; font-weight: 600; color: #475569; }
+        .item-remove-btn { background: none; border: none; color: #94a3b8; font-size: 13px; cursor: pointer; padding: 2px 4px; line-height: 1; }
+        .item-remove-btn:hover { color: #ef4444; }
+
+        /* 아이템 리스트 미리보기 영역 */
+        .bubble-item-list { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; }
+        .pv-item-list-row { display: flex; align-items: center; gap: 12px; font-size: 10.5px; padding: 2px 0; color: #333; }
+        .pv-item-list-row .il-name { width: 58px; flex-shrink: 0; color: #555; font-weight: 400; }
+        .pv-item-list-row .il-value { color: #111; font-weight: 700; word-break: break-all; }
+        .pv-item-list-row.item-row .il-value { font-weight: 500; }
+
+        /* 강조표기 미리보기 영역 */
+        .bubble-highlight-box { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; background: #fff; }
+        .pv-hl-sub { font-size: 10px; color: #777; margin-bottom: 3px; word-break: break-all; }
+        .pv-hl-main { font-size: 13px; font-weight: 800; color: #111; word-break: break-all; line-height: 1.3; }
+
+        .bubble-body { padding: 10px; color: #222; white-space: pre-wrap; word-break: break-all; min-height: 50px; line-height: 1.4; }
+        .bubble-extra { padding: 4px 10px 9px 10px; color: #888; font-size: 10px; white-space: pre-wrap; word-break: break-all; display: none; }
+        
+        .channel-add-desc { padding: 4px 10px 9px 10px; font-size: 10px; color: #666; line-height: 1.35; }
+        
+        .bubble-buttons { padding: 0 7px 7px 7px; display: flex; flex-direction: column; gap: 4px; }
+        .pv-btn { background: #f5f5f5; border: 1px solid #e0e0e0; padding: 7px; text-align: center; border-radius: 4px; color: #333; font-weight: bold; font-size: 10px; }
+        .pv-btn-yellow { background: #fee500; border: none; padding: 9px; text-align: center; border-radius: 6px; color: #000; font-weight: bold; font-size: 10.5px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .channel-ch-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            background-color: #000;
+            border-radius: 50%;
+            color: #fee500;
+            font-size: 8px;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        /* 커스텀 모달 공통 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.4); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-box { background: #fff; padding: 24px 28px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 420px; width: 90%; font-size: 14px; line-height: 1.6; color: #1e293b; }
+        .modal-btns { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .modal-btn-confirm { background: #1d4ed8; color: #fff; border: none; padding: 8px 22px; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .modal-btn-cancel { background: #dbeafe; color: #1e40af; border: none; padding: 8px 22px; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 13px; }
+
+        .alert-box { background: #fff; padding: 28px 32px 20px 32px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); width: 420px; max-width: 90%; font-size: 14px; color: #222; }
+        .alert-btns { display: flex; justify-content: flex-end; margin-top: 25px; }
+        .alert-btn-ok { background: #0f52ba; color: #fff; border: 1px solid #0b45a0; padding: 6px 24px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
+        .alert-btn-ok:hover { background: #0b439c; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <!-- 왼쪽: 입력 폼 -->
+    <div class="form-container">
+        <h2 style="font-size: 18px; margin-top:0; margin-bottom: 16px; border-bottom: 2px solid #333; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAgAAZABkAAD/7AARRHVja3kAAQAEAAAAUAAA/+ENOGh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8APD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNC4yLjItYzA2MyA1My4zNTI2MjQsIDIwMDgvMDcvMzAtMTg6MTI6MTggICAgICAgICI+CiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPgogIDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiCiAgICB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iCiAgICB4bWxuczp4bXBSaWdodHM9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9yaWdodHMvIgogICAgeG1sbnM6cGhvdG9zaG9wPSJodHRwOi8vbnMuYWRvYmUuY29tL3Bob3Rvc2hvcC8xLjAvIgogICAgeG1sbnM6SXB0YzR4bXBDb3JlPSJodHRwOi8vaXB0Yy5vcmcvc3RkL0lwdGM0eG1wQ29yZS8xLjAveG1sbnMvIgogICB4bXBSaWdodHM6V2ViU3RhdGVtZW50PSIiCiAgIHBob3Rvc2hvcDpBdXRob3JzUG9zaXRpb249IiI+CiAgIDxkYzpyaWdodHM+CiAgICA8cmRmOkFsdD4KICAgICA8cmRmOmxpIHhtbDpsYW5nPSJ4LWRlZmF1bHQiLz4KICAgIDwvcmRmOkFsdD4KICAgPC9kYzpyaWdodHM+CiAgIDxkYzpjcmVhdG9yPgogICAgPHJkZjpTZXE+CiAgICAgPHJkZjpsaS8+CiAgICA8L3JkZjpTZXE+CiAgIDwvZGM6Y3JlYXRvcj4KICAgPGRjOnRpdGxlPgogICAgPHJkZjpBbHQ+CiAgICAgPHJkZjpsaSB4bWw6bGFuZz0ieC1kZWZhdWx0Ij5rY3Q8L3JkZjpsaT4KICAgIDwvcmRmOkFsdD4KICAgPC9kYzp0aXRsZT4KICAgPHhtcFJpZ2h0czpVc2FnZVRlcm1zPgogICAgPHJkZjpBbHQ+CiAgICAgPHJkZjpsaSB4bWw6bGFuZz0ieC1kZWZhdWx0Ii8+CiAgICA8L3JkZjpBbHQ+CiAgIDwveG1wUmlnaHRzOlVzYWdlVGVybXM+CiAgIDxJcHRjNHhtcENvcmU6Q3JlYXRvckNvbnRhY3RJbmZvCiAgICBJcHRjNHhtcENvcmU6Q2lBZHJFeHRhZHI9IiIKICAgIElwdGM0eG1wQ29yZTpDaUFkckNpdHk9IiIKICAgIElwdGM0eG1wQ29yZTpDaUFkclJlZ2lvbj0iIgogICAgSXB0YzR4bXBDb3JlOkNpQWRyUGNvZGU9IiIKICAgIElwdGM0eG1wQ29yZTpDaUFkckN0cnk9IiIKICAgIElwdGM0eG1wQ29yZTpDaVRlbFdvcms9IiIKICAgIElwdGM0eG1wQ29yZTpDaUVtYWlsV29yaz0iIgogICAgSXB0YzR4bXBDb3JlOkNpVXJsV29yaz0iIi8+CiAgPC9yZGY6RGVzY3JpcHRpb24+CiA8L3JkZjpSREY+CjwveDp4bXBtZXRhPgogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAKICAgICAgICAgICAgICAgICAgICAgICAgICAgCjw/eHBhY2tldCBlbmQ9InciPz7/4gxYSUNDX1BST0ZJTEUAAQEAAAxITGlubwIQAABtbnRyUkdCIFhZWiAHzgACAAkABgAxAABhY3NwTVNGVAAAAABJRUMgc1JHQgAAAAAAAAAAAAAAAAAA9tYAAQAAAADTLUhQICAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABFjcHJ0AAABUAAAADNkZXNjAAABhAAAAGx3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" alt="KCT 로고" style="width: 32px; height: 32px; object-fit: contain; border-radius: 6px; flex-shrink: 0;"><span>카카오 알림톡 템플릿 신청서</span></h2>
+        
+        <form id="templateForm">
+            <!-- 발신프로필 ID -->
+            <div class="form-row">
+                <div class="label-col">발신프로필 ID <span class="req">*</span></div>
+                <div class="input-col">
+                    <input type="text" id="senderId" placeholder="@채널아이디 (예: @mycompany)">
+                </div>
+            </div>
+
+            <!-- 템플릿 코드 -->
+            <div class="form-row">
+                <div class="label-col">템플릿 코드 <span class="req">*</span></div>
+                <div class="input-col">
+                    <div class="radio-group">
+                        <label><input type="radio" name="codeType" value="auto" checked onchange="toggleCodeInput(false)"> 자동 생성</label>
+                        <label><input type="radio" name="codeType" value="manual" onchange="toggleCodeInput(true)"> 직접 입력</label>
+                    </div>
+                    <input type="text" id="templateCode" maxlength="30" placeholder="영문, 숫자, -, _ 조합" disabled style="width: 160px;" oninput="validateTemplateCode(this)">
+                    <span class="char-limit"><span id="codeLen">0</span>/30자</span>
+                </div>
+            </div>
+
+            <!-- 템플릿 명 -->
+            <div class="form-row">
+                <div class="label-col">템플릿 명 <span class="req">*</span></div>
+                <div class="input-col">
+                    <input type="text" id="templateName" maxlength="200" placeholder="관리용으로 템플릿 내용에 포함되지 않습니다">
+                    <span class="char-limit"><span id="nameLen">0</span>/200자</span>
+                </div>
+            </div>
+
+            <!-- 템플릿 카테고리 -->
+            <div class="form-row">
+                <div class="label-col">템플릿 카테고리 <span class="req">*</span></div>
+                <div class="input-col">
+                    <select id="catMain" style="width: 48%;" onchange="updateSubCategories()">
+                        <option value="">대분류</option>
+                        <option value="구매">구매</option>
+                        <option value="기타">기타</option>
+                        <option value="리포팅">리포팅</option>
+                        <option value="배송">배송</option>
+                        <option value="법적고지">법적고지</option>
+                        <option value="서비스이용">서비스이용</option>
+                        <option value="업무알림">업무알림</option>
+                        <option value="예약">예약</option>
+                        <option value="쿠폰/포인트">쿠폰/포인트</option>
+                        <option value="회원">회원</option>
+                    </select>
+                    <select id="catSub" style="width: 48%;">
+                        <option value="">소분류 선택</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 템플릿 유형 -->
+            <div class="form-row">
+                <div class="label-col">템플릿 유형 <span class="req">*</span></div>
+                <div class="input-col">
+                    <div class="radio-group">
+                        <label><input type="radio" name="templateType" value="기본형" checked onchange="handleTypeChange('기본형')"> 기본형</label>
+                        <label><input type="radio" name="templateType" value="이미지형" onchange="handleTypeChange('이미지형')"> 이미지형</label>
+                        <label><input type="radio" name="templateType" value="강조표기형" onchange="handleTypeChange('강조표기형')"> 강조표기형</label>
+                        <label><input type="radio" name="templateType" value="아이템리스트형" onchange="handleTypeChange('아이템리스트형')"> 아이템리스트형</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 아이템리스트형 체크박스 선택 영역 -->
+            <div class="form-row" id="itemListTypeRow" style="display: none;">
+                <div class="label-col">리스트형 입력항목 <span class="req">*</span></div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                    <div class="checkbox-group" style="gap: 16px;">
+                        <label><input type="checkbox" name="itemListItem" value="이미지" onchange="handleItemListCheckChange()"> 이미지</label>
+                        <label><input type="checkbox" name="itemListItem" value="헤더" onchange="handleItemListCheckChange()"> 헤더</label>
+                        <label><input type="checkbox" name="itemListItem" value="아이템 하이라이트" onchange="handleItemListCheckChange()"> 아이템 하이라이트</label>
+                        <label><input type="checkbox" name="itemListItem" value="아이템 리스트" onchange="handleItemListCheckChange()"> 아이템 리스트</label>
+                    </div>
+                    <span class="sub-desc" style="color: #e53e3e; margin-top: 2px;">* 최소 1개 필수 선택</span>
+                </div>
+            </div>
+
+            <!-- 이미지 동적 영역 -->
+            <div class="form-row" id="imageTypeRow" style="display: none;">
+                <div class="label-col">이미지 <span class="req">*</span></div>
+                <div class="input-col" style="gap: 8px; position: relative;">
+                    <a href="https://kakaobusiness.gitbook.io/main/ad/infotalk/audit#id-3" target="_blank" class="img-action-btn">이미지 가이드</a>
+                    <button type="button" class="img-action-btn" onclick="document.getElementById('imgFileInput').click()">파일 첨부</button>
+                    <input type="file" id="imgFileInput" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                    
+                    <span id="imgFileContainer" class="attached-file-badge">
+                        <span id="imgFileName"></span>
+                        <button type="button" class="btn-img-remove" onclick="removeImageFile()" title="이미지 삭제">✕</button>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 헤더 동적 영역 -->
+            <div class="form-row" id="headerTypeRow" style="display: none;">
+                <div class="label-col">헤더 <span class="req">*</span></div>
+                <div class="input-col">
+                    <input type="text" id="headerTextInput" maxlength="16" placeholder="변수 불가" style="flex:1;" oninput="updateHeaderPreview(this)">
+                    <span class="char-limit"><span id="headerLen">0</span>/16자</span>
+                </div>
+            </div>
+
+            <!-- 아이템 하이라이트 동적 영역 -->
+            <div class="form-row" id="itemHighlightRow" style="display: none; align-items: flex-start;">
+                <div class="label-col" style="padding-top: 10px;">아이템 하이라이트 <span class="req">*</span></div>
+                <div class="input-col" style="flex-direction: column; width: 100%;">
+                    <table class="highlight-table">
+                        <tr>
+                            <th>타이틀 <span class="req">*</span></th>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="text" id="itemHlTitle" maxlength="30" placeholder="썸네일 추가 시 21자, 변수 가능" oninput="updateItemHighlightPreview()">
+                                    <span class="char-limit"><span id="hlTitleLen">0</span>/<span id="hlTitleMax">30</span>자</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>내용 <span class="req">*</span></th>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="text" id="itemHlDesc" maxlength="19" placeholder="썸네일 추가 시 13자, 변수 가능" oninput="updateItemHighlightPreview()">
+                                    <span class="char-limit"><span id="hlDescLen">0</span>/<span id="hlDescMax">19</span>자</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>썸네일</th>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <button type="button" class="img-action-btn" onclick="document.getElementById('itemThumbInput').click()">파일 첨부</button>
+                                    <input type="file" id="itemThumbInput" accept="image/*" style="display: none;" onchange="handleThumbUpload(this)">
+                                    
+                                    <span id="thumbFileContainer" class="attached-file-badge">
+                                        <span id="thumbFileName"></span>
+                                        <button type="button" class="btn-img-remove" onclick="removeThumbFile()" title="삭제">✕</button>
+                                    </span>
+                                </div>
+                                <div class="sub-desc" style="margin-top: 6px;">
+                                    * 사이즈 : 가로 108px 이상, 가로:세로 비율 1:1<br>
+                                    * 파일형식 및 크기 : jpg, png / 최대 500KB
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 아이템 리스트 동적 영역 -->
+            <div class="form-row" id="itemListItemsRow" style="display: none; align-items: flex-start;">
+                <div class="label-col" style="padding-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div>아이템 리스트 <span class="req">*</span></div>
+                    <label style="display: flex; align-items: center; gap: 4px; font-weight: 400; font-size: 12px; cursor: pointer; color: #475569;">
+                        <input type="checkbox" id="itemListSummaryCheck" onchange="toggleItemListSummary(this.checked)"> 요약정보
+                    </label>
+                </div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start; width: 100%;">
+                    <div id="itemListRowsContainer" style="width: 100%;"></div>
+                    <button type="button" class="add-btn-trigger" onclick="addItemListRow()">+ 아이템 리스트 추가</button>
+
+                    <div id="itemListSummaryBox" style="display: none; width: 100%; margin-top: 12px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
+                        <div class="item-list-field">
+                            <div class="item-list-label-row"><span class="item-list-label">요약정보 <span class="req">*</span></span></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="text" id="itemListSummaryName" maxlength="6" placeholder="변수 불가" oninput="updateItemListSummaryValue('name', this.value)">
+                                <span class="char-limit"><span id="summaryNameLen">0</span>/6자</span>
+                            </div>
+                        </div>
+                        <div class="item-list-field" style="margin-top: 8px;">
+                            <div class="item-list-label-row"><span class="item-list-label">내용 <span class="req">*</span></span></div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="text" id="itemListSummaryContent" maxlength="14" placeholder="화폐단위, 숫자, 콤마만 가능, 변수 가능" oninput="updateItemListSummaryValue('content', this.value)">
+                                <span class="char-limit"><span id="summaryContentLen">0</span>/14자</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 강조표기형 동적 영역 -->
+            <div id="highlightTypeRow" style="display: none; flex-direction: column;">
+                <div class="form-row">
+                    <div class="label-col">강조표기 보조문구 <span class="req">*</span></div>
+                    <div class="input-col">
+                        <input type="text" id="highlightSubText" maxlength="18" placeholder="본문에 있는 내용만 입력 가능, 변수 불가" style="flex:1;" oninput="updateCharLimits()">
+                        <span class="char-limit" id="hlSubLimitContainer"><span id="hlSubLen">0</span>/18자</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="label-col">강조표기 문구 <span class="req">*</span></div>
+                    <div class="input-col">
+                        <input type="text" id="highlightMainText" maxlength="23" placeholder="본문에 있는 내용만 입력 가능, 변수 가능" style="flex:1;" oninput="updateCharLimits()">
+                        <span class="char-limit" id="hlMainLimitContainer"><span id="hlMainLen">0</span>/23자</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 템플릿 내용 -->
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 10px;">템플릿 내용 <span class="req">*</span></div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <textarea id="templateContent" maxlength="1300" placeholder="수신번호 별 다른 메시지를 보낼 경우 변수 설정&#10;예) #{고객명}님 안녕하세요."></textarea>
+                    <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 6px;">
+                        <span class="char-limit"><span id="contentLen">0</span>/<span id="contentMaxLen">1300</span>자</span>
+                    </div>
+                    <div class="sub-desc">* 변수 형식 : #{변수명}</div>
+                </div>
+            </div>
+
+            <!-- 부가정보 -->
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 2px;">부가정보</div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="useExtra" onchange="toggleExtraBox(this.checked)"> 사용</label>
+                    </div>
+                    <div id="extraBox" class="dynamic-input-box">
+                        <textarea id="extraContent" maxlength="500" placeholder="본문과 관련된 부가 정보메시지 입력(도움말, 이용안내 등), 변수 불가" style="height: 70px;"></textarea>
+                        <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 4px;">
+                            <span class="char-limit"><span id="extraLen">0</span>/<span id="extraMaxLen">500</span>자</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 버튼 설정 영역 -->
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 2px;">버튼</div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="useButton" onchange="toggleButtonBox(this.checked)"> 사용</label>
+                    </div>
+                    <div id="buttonBox" class="btn-setting-box">
+                        <div id="btnList"></div>
+                        <button type="button" class="add-btn-trigger" onclick="addBtnItem()">+ 버튼 추가</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 미리보기 메시지 -->
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 2px;">미리보기 메시지</div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="usePreviewMsg" onchange="handlePreviewMsgToggle(this)"> 사용</label>
+                    </div>
+                    <div id="previewMsgBox" class="dynamic-input-box">
+                        <input type="text" id="previewMsgInput" maxlength="40" placeholder="채팅방 리스트에 노출, 템플릿 심사 대상, 보안템플릿 사용불가" style="width: 100%;" oninput="document.getElementById('pvMsgLen').innerText = this.value.length">
+                        <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 4px;">
+                            <span class="char-limit"><span id="pvMsgLen">0</span>/40자</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 대표링크 -->
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 2px;">대표링크</div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <div class="checkbox-group" style="display: flex; align-items: center; gap: 8px;">
+                        <label style="display: inline-flex; align-items: center; gap: 4px;"><input type="checkbox" id="useMainLink" onchange="toggleMainLinkBox(this.checked)"> 사용</label>
+                        <span class="sub-desc" style="margin-top:0; display: inline;">* 알림톡 클릭 시 링크 이동, 업체/브랜드 대표사이트</span>
+                    </div>
+                    
+                    <div id="mainLinkBox" class="dynamic-input-box">
+                        <table class="link-table">
+                            <tr>
+                                <th>PC</th>
+                                <td><input type="text" id="linkPc" placeholder="https://"></td>
+                            </tr>
+                            <tr>
+                                <th>모바일</th>
+                                <td><input type="text" id="linkMobile" placeholder="https://"></td>
+                            </tr>
+                            <tr>
+                                <th>안드로이드</th>
+                                <td><input type="text" id="linkAndroid" placeholder=""></td>
+                            </tr>
+                            <tr>
+                                <th>아이폰</th>
+                                <td><input type="text" id="linkIos" placeholder=""></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 템플릿 보안 -->
+            <div class="form-row">
+                <div class="label-col">템플릿 보안</div>
+                <div class="input-col">
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="useSecurity" onchange="handleSecurityToggle(this)"> 사용</label>
+                    </div>
+                    <span class="sub-desc" style="color:#e53e3e; margin-top:0;">* OTP, 인증번호, 비밀번호, 신용등급 안내는 보안 필수, 모바일 외 디바이스에서 내용 미노출</span>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">템플릿 신청서 제출하기</button>
+        </form>
+    </div>
+
+    <!-- 오른쪽: 미리보기 -->
+    <div class="preview-container">
+        <div class="phone-mockup">
+            <div class="chat-screen">
+                <div class="profile-area">
+                    <div class="profile-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                </div>
+                
+                <div class="chat-bubble">
+                    <div class="bubble-header">
+                        <span>알림톡 도착</span>
+                        <span class="kakao-badge">kakao</span>
+                    </div>
+
+                    <!-- 1. 이미지 미리보기 -->
+                    <div id="pvImgBox" class="bubble-img-box" style="display: none;">
+                        <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        <span style="font-size: 11px;">이미지를 첨부해주세요</span>
+                    </div>
+
+                    <!-- 2. 헤더 미리보기 -->
+                    <div id="pvHeaderTitle" class="bubble-header-title" style="display: none;">헤더</div>
+
+                    <!-- 3. 아이템 하이라이트 미리보기 -->
+                    <div id="pvItemHighlightBox" class="bubble-item-highlight" style="display: none;">
+                        <div class="item-hl-text">
+                            <div id="pvItemHlTitle" class="item-hl-title">하이라이트 타이틀</div>
+                            <div id="pvItemHlDesc" class="item-hl-desc">하이라이트 내용</div>
+                        </div>
+                        <div id="pvItemHlThumb" class="item-hl-thumb" style="display: none;"></div>
+                    </div>
+
+                    <!-- 3-2. 아이템 리스트 미리보기 -->
+                    <div id="pvItemListBox" class="bubble-item-list" style="display: none;"></div>
+
+                    <!-- 4. 강조표기 미리보기 -->
+                    <div id="pvHighlightBox" class="bubble-highlight-box" style="display: none;">
+                        <div id="pvHlSub" class="pv-hl-sub">강조 표기 보조 문구</div>
+                        <div id="pvHlMain" class="pv-hl-main">강조 표기 문구</div>
+                    </div>
+
+                    <!-- 5. 본문 미리보기 -->
+                    <div class="bubble-body" id="pvBody">템플릿 내용을 입력해주세요.</div>
+                    <div class="bubble-extra" id="pvExtra"></div>
+                    <div id="pvChannelDesc" class="channel-add-desc" style="display: none;">채널 추가하고 이 채널의 마케팅 메시지 등을 카카오톡으로 받기</div>
+                    <div class="bubble-buttons" id="pvBtns"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 모달 팝업 1: 보안 알림 -->
+<div class="modal-overlay" id="secModal">
+    <div class="modal-box">
+        <div>템플릿 보안 체크 시, 메시지 미리보기 설정이 불가능합니다.</div>
+        <div>템플릿 보안을 사용하시겠습니까?</div>
+        <div class="modal-btns">
+            <button type="button" class="modal-btn-confirm" onclick="confirmSecurity(true)">확인</button>
+            <button type="button" class="modal-btn-cancel" onclick="confirmSecurity(false)">취소</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모달 팝업 2: 경고창 -->
+<div class="modal-overlay" id="channelLimitModal">
+    <div class="alert-box">
+        <div>채널추가 버튼은 1개만 삽입 가능합니다.</div>
+        <div class="alert-btns">
+            <button type="button" class="alert-btn-ok" onclick="closeChannelLimitModal()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모달 팝업 3: 아이템 리스트 최대 개수 경고창 -->
+<div class="modal-overlay" id="itemListMaxModal">
+    <div class="alert-box">
+        <div>아이템은 최대 10개까지 추가 가능합니다.</div>
+        <div class="alert-btns">
+            <button type="button" class="alert-btn-ok" onclick="closeItemListMaxModal()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모달 팝업 4: 버튼 최대 개수 경고창 -->
+<div class="modal-overlay" id="btnMaxModal">
+    <div class="alert-box">
+        <div>버튼은 최대 5개까지 추가 가능합니다.</div>
+        <div class="alert-btns">
+            <button type="button" class="alert-btn-ok" onclick="closeBtnMaxModal()">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 모달 팝업 5: 공용 알림창 (기존 브라우저 alert() 전체 대체) -->
+<div class="modal-overlay" id="genericAlertModal">
+    <div class="alert-box">
+        <div id="genericAlertMsg"></div>
+        <div class="alert-btns">
+            <button type="button" class="alert-btn-ok" onclick="closeGenericAlert()">확인</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const GH_USERNAME = "본인_GITHUB_아이디";
+    const GH_REPO = "kakao-template-db";
+    const GH_TOKEN = ""; 
+    const GH_BRANCH = "main"; // 저장소의 기본 브랜치명이 다르면 이 값을 수정하세요 (예: master)
+
+    let buttons = [];
+    let uploadedBase64Img = "";
+    let uploadedThumbImg = "";
+    let uploadedImgFile = null;   // 이미지 원본 File 객체 (제출 시 별도 커밋용)
+    let uploadedThumbFile = null; // 썸네일 원본 File 객체 (제출 시 별도 커밋용)
+    let itemListData = [];
+    let itemListIdSeq = 0;
+    let itemListSummary = { name: "", content: "" };
+
+    const categoryData = {
+        "구매": ["구매완료", "상품가입", "진행상태", "구매취소", "구매예약/입고알림"],
+        "기타": ["기타"],
+        "리포팅": ["피드백", "요금청구", "계약/견적", "안전/피해예방", "뉴스레터", "거래알림"],
+        "배송": ["배송상태", "배송예정", "배송완료", "배송실패"],
+        "법적고지": ["수신동의", "개인정보", "약관변경", "휴면 관련"],
+        "서비스이용": ["이용안내/공지", "신청접수", "처리완료", "이용도구", "방문서비스", "피드백 요청", "구매감사/이용확인", "리마인드"],
+        "업무알림": ["주문/예약", "내부 업무 알림"],
+        "예약": ["예약완료/예약내역", "예약상태", "예약취소", "예약알림/리마인드"],
+        "쿠폰/포인트": ["쿠폰발급", "쿠폰사용", "포인트적립", "포인트사용", "쿠폰/포인트안내"],
+        "회원": ["회원가입", "인증/비밀번호/로그인", "회원정보/회원혜택"]
+    };
+
+    function updateSubCategories() {
+        const mainSelect = document.getElementById('catMain');
+        const subSelect = document.getElementById('catSub');
+        const selectedMain = mainSelect.value;
+
+        subSelect.innerHTML = '<option value="">소분류 선택</option>';
+
+        if (selectedMain && categoryData[selectedMain]) {
+            categoryData[selectedMain].forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.innerText = sub;
+                subSelect.appendChild(opt);
+            });
+        }
+    }
+
+    function validateTemplateCode(input) {
+        input.value = input.value.replace(/[^a-zA-Z0-9\-_]/g, '');
+        document.getElementById('codeLen').innerText = input.value.length;
+    }
+
+    function toggleCodeInput(isManual) {
+        const input = document.getElementById('templateCode');
+        input.disabled = !isManual;
+        if (!isManual) {
+            input.value = '';
+            document.getElementById('codeLen').innerText = '0';
+        }
+    }
+
+    function resetMiddleSection() {
+        removeImageFile();
+        removeThumbFile();
+        document.getElementById('highlightSubText').value = '';
+        document.getElementById('highlightMainText').value = '';
+        document.getElementById('hlSubLen').innerText = '0';
+        document.getElementById('hlMainLen').innerText = '0';
+        document.getElementById('pvHlSub').innerText = '강조 표기 보조 문구';
+        document.getElementById('pvHlMain').innerText = '강조 표기 문구';
+        
+        // 헤더 초기화
+        const headerInput = document.getElementById('headerTextInput');
+        if (headerInput) headerInput.value = '';
+        document.getElementById('headerLen').innerText = '0';
+        document.getElementById('pvHeaderTitle').innerText = '헤더';
+        document.getElementById('pvHeaderTitle').style.display = 'none';
+
+        // 아이템 하이라이트 초기화
+        document.getElementById('itemHlTitle').value = '';
+        document.getElementById('itemHlDesc').value = '';
+        document.getElementById('pvItemHlTitle').innerText = '하이라이트 타이틀';
+        document.getElementById('pvItemHlDesc').innerText = '하이라이트 내용';
+        document.getElementById('pvItemHighlightBox').style.display = 'none';
+
+        // 리스트형 체크박스 초기화
+        const itemListCheckboxes = document.querySelectorAll('input[name="itemListItem"]');
+        itemListCheckboxes.forEach(cb => cb.checked = false);
+
+        // 아이템 리스트 초기화
+        itemListData = [];
+        itemListSummary = { name: "", content: "" };
+        const itemListItemsRow = document.getElementById('itemListItemsRow');
+        if (itemListItemsRow) itemListItemsRow.style.display = 'none';
+        const itemListRowsContainer = document.getElementById('itemListRowsContainer');
+        if (itemListRowsContainer) itemListRowsContainer.innerHTML = '';
+        const summaryCheck = document.getElementById('itemListSummaryCheck');
+        if (summaryCheck) summaryCheck.checked = false;
+        const summaryBox = document.getElementById('itemListSummaryBox');
+        if (summaryBox) summaryBox.style.display = 'none';
+        const summaryNameInput = document.getElementById('itemListSummaryName');
+        if (summaryNameInput) summaryNameInput.value = '';
+        const summaryContentInput = document.getElementById('itemListSummaryContent');
+        if (summaryContentInput) summaryContentInput.value = '';
+        const summaryNameLen = document.getElementById('summaryNameLen');
+        if (summaryNameLen) summaryNameLen.innerText = '0';
+        const summaryContentLen = document.getElementById('summaryContentLen');
+        if (summaryContentLen) summaryContentLen.innerText = '0';
+        const pvItemListBox = document.getElementById('pvItemListBox');
+        if (pvItemListBox) { pvItemListBox.style.display = 'none'; pvItemListBox.innerHTML = ''; }
+    }
+
+    /* 아이템리스트형 체크박스 상태 변경 처리 */
+    function handleItemListCheckChange() {
+        const selectedType = document.querySelector('input[name="templateType"]:checked').value;
+        if (selectedType === '아이템리스트형') {
+            const imgCheckbox = document.querySelector('input[name="itemListItem"][value="이미지"]');
+            const headerCheckbox = document.querySelector('input[name="itemListItem"][value="헤더"]');
+            const itemHlCheckbox = document.querySelector('input[name="itemListItem"][value="아이템 하이라이트"]');
+
+            // 1. 이미지
+            if (imgCheckbox && imgCheckbox.checked) {
+                document.getElementById('imageTypeRow').style.display = 'flex';
+                document.getElementById('pvImgBox').style.display = 'flex';
+            } else {
+                document.getElementById('imageTypeRow').style.display = 'none';
+                document.getElementById('pvImgBox').style.display = 'none';
+                removeImageFile();
+            }
+
+            // 2. 헤더
+            if (headerCheckbox && headerCheckbox.checked) {
+                document.getElementById('headerTypeRow').style.display = 'flex';
+                document.getElementById('pvHeaderTitle').style.display = 'block';
+            } else {
+                document.getElementById('headerTypeRow').style.display = 'none';
+                document.getElementById('pvHeaderTitle').style.display = 'none';
+                document.getElementById('headerTextInput').value = '';
+                document.getElementById('headerLen').innerText = '0';
+                document.getElementById('pvHeaderTitle').innerText = '헤더';
+            }
+
+            // 3. 아이템 하이라이트
+            if (itemHlCheckbox && itemHlCheckbox.checked) {
+                document.getElementById('itemHighlightRow').style.display = 'flex';
+                document.getElementById('pvItemHighlightBox').style.display = 'flex';
+            } else {
+                document.getElementById('itemHighlightRow').style.display = 'none';
+                document.getElementById('pvItemHighlightBox').style.display = 'none';
+                document.getElementById('itemHlTitle').value = '';
+                document.getElementById('itemHlDesc').value = '';
+                removeThumbFile();
+            }
+
+            // 4. 아이템 리스트
+            const itemListCheckbox = document.querySelector('input[name="itemListItem"][value="아이템 리스트"]');
+            if (itemListCheckbox && itemListCheckbox.checked) {
+                document.getElementById('itemListItemsRow').style.display = 'flex';
+                document.getElementById('pvItemListBox').style.display = 'block';
+                if (itemListData.length === 0) {
+                    initItemList();
+                } else {
+                    updateItemListPreview();
+                }
+            } else {
+                document.getElementById('itemListItemsRow').style.display = 'none';
+                document.getElementById('pvItemListBox').style.display = 'none';
+                itemListData = [];
+                itemListSummary = { name: "", content: "" };
+                document.getElementById('itemListRowsContainer').innerHTML = '';
+                document.getElementById('itemListSummaryCheck').checked = false;
+                document.getElementById('itemListSummaryBox').style.display = 'none';
+                document.getElementById('itemListSummaryName').value = '';
+                document.getElementById('itemListSummaryContent').value = '';
+                document.getElementById('summaryNameLen').innerText = '0';
+                document.getElementById('summaryContentLen').innerText = '0';
+            }
+        }
+    }
+
+    function updateHeaderPreview(input) {
+        document.getElementById('headerLen').innerText = input.value.length;
+        document.getElementById('pvHeaderTitle').innerText = input.value || '헤더';
+    }
+
+    /* 아이템 하이라이트 실시간 업데이터 */
+    function updateItemHighlightPreview() {
+        const titleInput = document.getElementById('itemHlTitle');
+        const descInput = document.getElementById('itemHlDesc');
+
+        document.getElementById('hlTitleLen').innerText = titleInput.value.length;
+        document.getElementById('hlDescLen').innerText = descInput.value.length;
+
+        document.getElementById('pvItemHlTitle').innerText = titleInput.value || '하이라이트 타이틀';
+        document.getElementById('pvItemHlDesc').innerText = descInput.value || '하이라이트 내용';
+    }
+
+    /* 아이템 리스트 관련 함수 */
+    function escapeAttr(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function createItemListEntry(name = '', content = '') {
+        itemListIdSeq++;
+        return { id: itemListIdSeq, name, content };
+    }
+
+    function initItemList() {
+        itemListData = [createItemListEntry(), createItemListEntry()];
+        renderItemListRows();
+    }
+
+    function addItemListRow() {
+        if (itemListData.length >= 10) {
+            document.getElementById('itemListMaxModal').style.display = 'flex';
+            return;
+        }
+        itemListData.push(createItemListEntry());
+        renderItemListRows();
+    }
+
+    function removeItemListRow(id) {
+        if (itemListData.length <= 2) return;
+        itemListData = itemListData.filter(item => item.id !== id);
+        renderItemListRows();
+    }
+
+    function closeItemListMaxModal() {
+        document.getElementById('itemListMaxModal').style.display = 'none';
+    }
+
+    function updateItemListValue(id, field, value) {
+        const item = itemListData.find(it => it.id === id);
+        if (!item) return;
+        item[field] = value;
+        const lenSpan = document.getElementById((field === 'name' ? 'itemNameLen_' : 'itemContentLen_') + id);
+        if (lenSpan) lenSpan.innerText = value.length;
+        updateItemListPreview();
+    }
+
+    function renderItemListRows() {
+        const container = document.getElementById('itemListRowsContainer');
+        if (!container) return;
+        const showRemove = itemListData.length > 2;
+
+        container.innerHTML = itemListData.map(item => `
+            <div class="item-list-card">
+                <div class="item-list-field">
+                    <div class="item-list-label-row">
+                        <span class="item-list-label">아이템명 <span class="req">*</span></span>
+                        ${showRemove ? `<button type="button" class="item-remove-btn" onclick="removeItemListRow(${item.id})" title="삭제">✕</button>` : ''}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="text" maxlength="6" placeholder="변수 불가" value="${escapeAttr(item.name)}" oninput="updateItemListValue(${item.id}, 'name', this.value)">
+                        <span class="char-limit"><span id="itemNameLen_${item.id}">${item.name.length}</span>/6자</span>
+                    </div>
+                </div>
+                <div class="item-list-field">
+                    <div class="item-list-label-row">
+                        <span class="item-list-label">내용 <span class="req">*</span></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="text" maxlength="23" placeholder="변수 가능" value="${escapeAttr(item.content)}" oninput="updateItemListValue(${item.id}, 'content', this.value)">
+                        <span class="char-limit"><span id="itemContentLen_${item.id}">${item.content.length}</span>/23자</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        updateItemListPreview();
+    }
+
+    function toggleItemListSummary(checked) {
+        document.getElementById('itemListSummaryBox').style.display = checked ? 'block' : 'none';
+        if (!checked) {
+            itemListSummary = { name: "", content: "" };
+            document.getElementById('itemListSummaryName').value = '';
+            document.getElementById('itemListSummaryContent').value = '';
+            document.getElementById('summaryNameLen').innerText = '0';
+            document.getElementById('summaryContentLen').innerText = '0';
+        }
+        updateItemListPreview();
+    }
+
+    function updateItemListSummaryValue(field, value) {
+        itemListSummary[field] = value;
+        const lenSpan = document.getElementById(field === 'name' ? 'summaryNameLen' : 'summaryContentLen');
+        if (lenSpan) lenSpan.innerText = value.length;
+        updateItemListPreview();
+    }
+
+    function updateItemListPreview() {
+        const pvBox = document.getElementById('pvItemListBox');
+        if (!pvBox) return;
+
+        let rowsHtml = itemListData.map((item, idx) => `
+            <div class="pv-item-list-row item-row">
+                <span class="il-name">${item.name || ('아이템명' + (idx + 1))}</span>
+                <span class="il-value">${item.content || ('내용' + (idx + 1))}</span>
+            </div>
+        `).join('');
+
+        const summaryCheck = document.getElementById('itemListSummaryCheck');
+        if (summaryCheck && summaryCheck.checked) {
+            rowsHtml += `
+                <div class="pv-item-list-row">
+                    <span class="il-name">${itemListSummary.name || '요약정보명'}</span>
+                    <span class="il-value">${itemListSummary.content || '내용'}</span>
+                </div>
+            `;
+        }
+
+        pvBox.innerHTML = rowsHtml;
+    }
+
+    function handleThumbUpload(input) {
+        const file = input.files[0];
+        if (file) {
+            uploadedThumbFile = file;
+            document.getElementById('thumbFileName').innerText = file.name;
+            document.getElementById('thumbFileContainer').style.display = 'inline-flex';
+
+            // 썸네일 있을 때 글자 수 제한 조정
+            document.getElementById('itemHlTitle').maxLength = 21;
+            document.getElementById('itemHlDesc').maxLength = 13;
+            document.getElementById('hlTitleMax').innerText = '21';
+            document.getElementById('hlDescMax').innerText = '13';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedThumbImg = e.target.result;
+                const thumbBox = document.getElementById('pvItemHlThumb');
+                thumbBox.innerHTML = `<img src="${uploadedThumbImg}" alt="썸네일">`;
+                thumbBox.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeThumbFile() {
+        document.getElementById('itemThumbInput').value = '';
+        uploadedThumbImg = "";
+        uploadedThumbFile = null;
+        document.getElementById('thumbFileContainer').style.display = 'none';
+        document.getElementById('thumbFileName').innerText = '';
+
+        // 썸네일 없을 때 기본 글자 수 제한 복원
+        document.getElementById('itemHlTitle').maxLength = 30;
+        document.getElementById('itemHlDesc').maxLength = 19;
+        document.getElementById('hlTitleMax').innerText = '30';
+        document.getElementById('hlDescMax').innerText = '19';
+
+        const thumbBox = document.getElementById('pvItemHlThumb');
+        thumbBox.innerHTML = '';
+        thumbBox.style.display = 'none';
+    }
+
+    function handleTypeChange(type) {
+        resetMiddleSection();
+
+        const imgRow = document.getElementById('imageTypeRow');
+        const pvImgBox = document.getElementById('pvImgBox');
+        const headerRow = document.getElementById('headerTypeRow');
+        const pvHeaderTitle = document.getElementById('pvHeaderTitle');
+        const hlRow = document.getElementById('highlightTypeRow');
+        const pvHlBox = document.getElementById('pvHighlightBox');
+        const itemListRow = document.getElementById('itemListTypeRow');
+        const itemHlRow = document.getElementById('itemHighlightRow');
+        const pvItemHlBox = document.getElementById('pvItemHighlightBox');
+
+        if (type === '이미지형') {
+            imgRow.style.display = 'flex';
+            pvImgBox.style.display = 'flex';
+        } else {
+            imgRow.style.display = 'none';
+            pvImgBox.style.display = 'none';
+        }
+
+        headerRow.style.display = 'none';
+        pvHeaderTitle.style.display = 'none';
+        itemHlRow.style.display = 'none';
+        pvItemHlBox.style.display = 'none';
+
+        if (type === '강조표기형') {
+            hlRow.style.display = 'flex';
+            pvHlBox.style.display = 'block';
+        } else {
+            hlRow.style.display = 'none';
+            pvHlBox.style.display = 'none';
+        }
+
+        if (type === '아이템리스트형') {
+            itemListRow.style.display = 'flex';
+        } else {
+            itemListRow.style.display = 'none';
+        }
+
+        updateCharLimits();
+    }
+
+    function handleImageUpload(input) {
+        const file = input.files[0];
+        const pvImgBox = document.getElementById('pvImgBox');
+        const imgFileName = document.getElementById('imgFileName');
+        const imgFileContainer = document.getElementById('imgFileContainer');
+
+        if (file) {
+            uploadedImgFile = file;
+            imgFileName.innerText = file.name;
+            imgFileContainer.style.display = 'inline-flex';
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                uploadedBase64Img = e.target.result;
+                pvImgBox.innerHTML = `<img src="${uploadedBase64Img}" alt="이미지 미리보기">`;
+            };
+
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function removeImageFile() {
+        const fileInput = document.getElementById('imgFileInput');
+        if (fileInput) fileInput.value = '';
+        
+        uploadedBase64Img = "";
+        uploadedImgFile = null;
+        document.getElementById('imgFileContainer').style.display = 'none';
+        document.getElementById('imgFileName').innerText = '';
+
+        const pvImgBox = document.getElementById('pvImgBox');
+        if (pvImgBox) {
+            pvImgBox.innerHTML = `
+                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                <span style="font-size: 11px;">이미지를 첨부해주세요</span>
+            `;
+        }
+    }
+
+    const templateName = document.getElementById('templateName');
+    const templateContent = document.getElementById('templateContent');
+    const extraContent = document.getElementById('extraContent');
+    const nameLen = document.getElementById('nameLen');
+    const pvBody = document.getElementById('pvBody');
+    const pvExtra = document.getElementById('pvExtra');
+    const pvBtns = document.getElementById('pvBtns');
+    const pvChannelDesc = document.getElementById('pvChannelDesc');
+
+    templateName.addEventListener('input', () => nameLen.innerText = templateName.value.length);
+
+    function updateCharLimits() {
+        const selectedType = document.querySelector('input[name="templateType"]:checked') ? document.querySelector('input[name="templateType"]:checked').value : '기본형';
+        const isHighlight = (selectedType === '강조표기형');
+        const isExtra = document.getElementById('useExtra').checked;
+
+        let contentVal = templateContent.value;
+        let extraVal = extraContent.value;
+        let hlSubVal = document.getElementById('highlightSubText').value;
+        let hlMainVal = document.getElementById('highlightMainText').value;
+
+        let maxHlSub = 18;
+        let maxHlMain = 23;
+
+        if (isHighlight) {
+            const cLen = contentVal.length;
+
+            if (cLen > 1277 && cLen <= 1282) {
+                maxHlMain = Math.max(0, 1300 - cLen - hlSubVal.length);
+                maxHlSub = Math.min(18, Math.max(0, 1300 - cLen - hlMainVal.length));
+            } else if (cLen > 1282) {
+                maxHlMain = Math.max(0, 1300 - cLen - hlSubVal.length);
+                maxHlSub = Math.max(0, 1300 - cLen - hlMainVal.length);
+            }
+
+            document.getElementById('highlightSubText').maxLength = maxHlSub;
+            document.getElementById('highlightMainText').maxLength = maxHlMain;
+
+            if (hlSubVal.length > maxHlSub) {
+                hlSubVal = hlSubVal.substring(0, maxHlSub);
+                document.getElementById('highlightSubText').value = hlSubVal;
+            }
+            if (hlMainVal.length > maxHlMain) {
+                hlMainVal = hlMainVal.substring(0, maxHlMain);
+                document.getElementById('highlightMainText').value = hlMainVal;
+            }
+        }
+
+        const currentHlLen = isHighlight ? (hlSubVal.length + hlMainVal.length) : 0;
+
+        let maxExtraAllowed = 500;
+        const baseContentAndHl = contentVal.length + currentHlLen;
+
+        if (baseContentAndHl > 800) {
+            maxExtraAllowed = Math.max(0, 1300 - baseContentAndHl);
+        }
+
+        extraContent.maxLength = maxExtraAllowed;
+        if (isExtra && extraVal.length > maxExtraAllowed) {
+            extraVal = extraVal.substring(0, maxExtraAllowed);
+            extraContent.value = extraVal;
+        }
+
+        const currentExtraLen = isExtra ? extraVal.length : 0;
+        const maxContentAllowed = Math.max(0, 1300 - currentExtraLen - currentHlLen);
+
+        templateContent.maxLength = maxContentAllowed;
+
+        document.getElementById('hlSubLen').innerText = hlSubVal.length;
+        document.getElementById('hlMainLen').innerText = hlMainVal.length;
+        document.getElementById('contentLen').innerText = contentVal.length;
+        document.getElementById('contentMaxLen').innerText = maxContentAllowed;
+        document.getElementById('extraLen').innerText = extraVal.length;
+        document.getElementById('extraMaxLen').innerText = maxExtraAllowed;
+
+        const hlSubLimitContainer = document.getElementById('hlSubLimitContainer');
+        const hlMainLimitContainer = document.getElementById('hlMainLimitContainer');
+        if (hlSubLimitContainer) hlSubLimitContainer.innerHTML = `<span id="hlSubLen">${hlSubVal.length}</span>/${maxHlSub}자`;
+        if (hlMainLimitContainer) hlMainLimitContainer.innerHTML = `<span id="hlMainLen">${hlMainVal.length}</span>/${maxHlMain}자`;
+
+        document.getElementById('pvHlSub').innerText = hlSubVal || '강조 표기 보조 문구';
+        document.getElementById('pvHlMain').innerText = hlMainVal || '강조 표기 문구';
+        pvBody.innerText = contentVal || '템플릿 내용을 입력해주세요.';
+        if (isExtra) {
+            pvExtra.innerText = extraVal || '부가정보';
+        }
+    }
+
+    templateContent.addEventListener('input', updateCharLimits);
+    extraContent.addEventListener('input', updateCharLimits);
+
+    function toggleExtraBox(show) {
+        const extraBox = document.getElementById('extraBox');
+        extraBox.style.display = show ? 'block' : 'none';
+        pvExtra.style.display = show ? 'block' : 'none';
+        if (!show) {
+            extraContent.value = '';
+            pvExtra.innerText = '';
+        }
+        updateCharLimits();
+    }
+
+    function handlePreviewMsgToggle(chk) {
+        const useSecurity = document.getElementById('useSecurity');
+        if (chk.checked && useSecurity.checked) {
+            showAlertModal('템플릿 보안 사용 시 미리보기 메시지를 함께 등록할 수 없습니다.');
+            chk.checked = false;
+            return;
+        }
+        togglePreviewMsgBox(chk.checked);
+    }
+
+    function togglePreviewMsgBox(show) {
+        const previewMsgBox = document.getElementById('previewMsgBox');
+        previewMsgBox.style.display = show ? 'block' : 'none';
+        if (!show) {
+            document.getElementById('previewMsgInput').value = '';
+            document.getElementById('pvMsgLen').innerText = '0';
+        }
+    }
+
+    function handleSecurityToggle(chk) {
+        const usePreviewMsg = document.getElementById('usePreviewMsg');
+        if (chk.checked && usePreviewMsg.checked) {
+            document.getElementById('secModal').style.display = 'flex';
+        }
+    }
+
+    function confirmSecurity(isConfirm) {
+        const useSecurity = document.getElementById('useSecurity');
+        document.getElementById('secModal').style.display = 'none';
+
+        if (isConfirm) {
+            useSecurity.checked = true;
+            document.getElementById('usePreviewMsg').checked = false;
+            togglePreviewMsgBox(false);
+        } else {
+            useSecurity.checked = false;
+        }
+    }
+
+    function closeChannelLimitModal() {
+        document.getElementById('channelLimitModal').style.display = 'none';
+    }
+
+    function toggleMainLinkBox(show) {
+        const box = document.getElementById('mainLinkBox');
+        box.style.display = show ? 'block' : 'none';
+        if (!show) {
+            document.getElementById('linkPc').value = '';
+            document.getElementById('linkMobile').value = '';
+            document.getElementById('linkAndroid').value = '';
+            document.getElementById('linkIos').value = '';
+        }
+    }
+
+    function toggleButtonBox(show) {
+        document.getElementById('buttonBox').style.display = show ? 'block' : 'none';
+        if (show && buttons.length === 0) {
+            addBtnItem();
+        } else if (!show) {
+            buttons = [];
+            renderButtons();
+        }
+    }
+
+    function addBtnItem() {
+        if (buttons.length >= 5) {
+            document.getElementById('btnMaxModal').style.display = 'flex';
+            return;
+        }
+        buttons.push({
+            type: '선택',
+            name: '',
+            extraVal: '',
+            urlMobile: '',
+            urlPc: '',
+            urlAndroid: '',
+            urlIos: ''
+        });
+        renderButtons();
+    }
+
+    function closeBtnMaxModal() {
+        document.getElementById('btnMaxModal').style.display = 'none';
+    }
+
+    // 기존 브라우저 alert()를 대체하는 공용 커스텀 알림창
+    // callback을 전달하면 '확인' 버튼 클릭 시 실행됩니다. (예: 등록 완료 후 새로고침)
+    let genericAlertCallback = null;
+    function showAlertModal(message, callback, focusEl) {
+        document.getElementById('genericAlertMsg').innerText = message;
+
+        let cb = typeof callback === 'function' ? callback : null;
+
+        if (focusEl) {
+            const focusTarget = focusEl;
+            const prevCb = cb;
+            cb = () => {
+                if (typeof prevCb === 'function') prevCb();
+                setTimeout(() => {
+                    focusTarget.focus();
+                    if (typeof focusTarget.select === 'function') {
+                        focusTarget.select();
+                    }
+                }, 0);
+            };
+        }
+
+        genericAlertCallback = cb;
+        document.getElementById('genericAlertModal').style.display = 'flex';
+    }
+    function closeGenericAlert() {
+        document.getElementById('genericAlertModal').style.display = 'none';
+        const cb = genericAlertCallback;
+        genericAlertCallback = null;
+        if (cb) cb();
+    }
+
+    function renderButtons() {
+        const list = document.getElementById('btnList');
+        list.innerHTML = '';
+
+        buttons.forEach((btn, idx) => {
+            const card = document.createElement('div');
+            card.className = 'btn-item-card';
+
+            const options = [
+                '선택', '채널추가', '배송조회', '웹링크', '앱링크', 
+                '봇키워드', '메시지전달', '상담톡전환', '봇전환', 
+                '비즈니스폼', '전화하기', '지도보기'
+            ];
+
+            let optionsHtml = options.map(opt => {
+                let disabledAttr = (opt === '선택') ? 'disabled' : '';
+                let selectedAttr = (btn.type === opt) ? 'selected' : '';
+                return `<option value="${opt}" ${disabledAttr} ${selectedAttr}>${opt}</option>`;
+            }).join('');
+
+            let isChannelAdd = (btn.type === '채널추가');
+            let isBizForm = (btn.type === '비즈니스폼');
+            let isPhone = (btn.type === '전화하기');
+            let isSelect = (btn.type === '선택');
+
+            let nameInputHtml = '';
+            if (isBizForm) {
+                const bizOptions = ['버튼명 선택', '톡에서 설문하기', '톡에서 응모하기', '톡에서 예약하기'];
+                let bizOptsHtml = bizOptions.map(opt => `<option value="${opt === '버튼명 선택' ? '' : opt}" ${btn.name === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                nameInputHtml = `
+                    <div class="btn-name-wrap" style="padding-right:0;">
+                        <select style="width:100%; border:none;" onchange="updateBtnNameSelect(${idx}, this.value)">
+                            ${bizOptsHtml}
+                        </select>
+                    </div>
+                `;
+            } else if (isPhone) {
+                const phoneOptions = ['버튼명 선택', '전화 연결', '고객센터 연결', '상담원 연결'];
+                let phoneOptsHtml = phoneOptions.map(opt => `<option value="${opt === '버튼명 선택' ? '' : opt}" ${btn.name === opt ? 'selected' : ''}>${opt}</option>`).join('');
+                nameInputHtml = `
+                    <div class="btn-name-wrap" style="padding-right:0;">
+                        <select style="width:100%; border:none;" onchange="updateBtnNameSelect(${idx}, this.value)">
+                            ${phoneOptsHtml}
+                        </select>
+                    </div>
+                `;
+            } else {
+                let btnNameVal = isChannelAdd ? '채널 추가' : (btn.name || '');
+                nameInputHtml = `
+                    <div class="btn-name-wrap">
+                        <input type="text" id="btnNameInput_${idx}" maxlength="14" placeholder="버튼명 입력" value="${btnNameVal}" ${isChannelAdd || isSelect ? 'disabled' : ''} oninput="updateBtnName(${idx}, this)">
+                        <span class="char-limit"><span id="btnNameLen_${idx}">${btnNameVal.length}</span>/14자</span>
+                    </div>
+                `;
+            }
+
+            let subInputsHtml = '';
+            let infoTextHtml = '';
+
+            if (btn.type === '배송조회') {
+                infoTextHtml = `* 템플릿 내용에 택배사명, 송장번호 필수\n* 이용가능 택배사 : 우체국, 로젠, 일양, FedEx, 한진, 경동, 합동, 롯데, 농협, 호남, 천일, 대신, 건영, CU, CVSnet, 한덱스, TNT, USPS, EMS, DHL, 굿투럭`;
+            } else if (btn.type === '웹링크') {
+                subInputsHtml = `
+                    <div class="btn-sub-inputs">
+                        <input type="text" placeholder="모바일 https://" value="${btn.urlMobile || ''}" oninput="updateBtnData(${idx}, 'urlMobile', this.value)">
+                        <input type="text" placeholder="PC(선택) https://" value="${btn.urlPc || ''}" oninput="updateBtnData(${idx}, 'urlPc', this.value)">
+                    </div>
+                `;
+            } else if (btn.type === '앱링크') {
+                subInputsHtml = `
+                    <div class="btn-sub-inputs">
+                        <input type="text" placeholder="안드로이드" value="${btn.urlAndroid || ''}" oninput="updateBtnData(${idx}, 'urlAndroid', this.value)">
+                        <input type="text" placeholder="아이폰" value="${btn.urlIos || ''}" oninput="updateBtnData(${idx}, 'urlIos', this.value)">
+                        <input type="text" placeholder="모바일 https://" value="${btn.urlMobile || ''}" oninput="updateBtnData(${idx}, 'urlMobile', this.value)">
+                        <input type="text" placeholder="PC(선택) https://" value="${btn.urlPc || ''}" oninput="updateBtnData(${idx}, 'urlPc', this.value)">
+                    </div>
+                `;
+                infoTextHtml = `* 안드로이드, 아이폰, 모바일 중 2가지 이상 입력 필수`;
+            } else if (btn.type === '비즈니스폼') {
+                subInputsHtml = `
+                    <div class="btn-sub-inputs">
+                        <input type="text" placeholder="비즈니스폼 ID 입력" value="${btn.extraVal || ''}" oninput="updateBtnData(${idx}, 'extraVal', this.value)">
+                    </div>
+                `;
+            } else if (btn.type === '전화하기') {
+                subInputsHtml = `
+                    <div class="btn-sub-inputs">
+                        <input type="text" placeholder="전화번호 입력 (변수, 숫자, 하이픈 입력 가능)" value="${btn.extraVal || ''}" oninput="updateBtnData(${idx}, 'extraVal', this.value)">
+                    </div>
+                `;
+                infoTextHtml = `* 모바일에서 확인 가능, PC는 "모바일에서 확인해주세요" 안내문구 표시`;
+            } else if (btn.type === '지도보기') {
+                infoTextHtml = `* 알림톡 발송 시 입력한 주소가 카카오맵에서 표시`;
+            } else if (btn.type === '상담톡전환') {
+                infoTextHtml = `* 상담톡을 이용하는 카카오톡 채널만 이용 가능`;
+            } else if (btn.type === '봇전환') {
+                infoTextHtml = `* 카카오 i 오픈빌더를 이용하는 카카오톡 채널만 이용 가능`;
+            }
+
+            card.innerHTML = `
+                <div class="btn-main-inputs">
+                    <select class="btn-type-select" onchange="updateBtnType(${idx}, this.value)">
+                        ${optionsHtml}
+                    </select>
+                    ${nameInputHtml}
+                    <button type="button" class="btn-del-btn" onclick="removeBtn(${idx})">✕</button>
+                </div>
+                ${subInputsHtml}
+                ${infoTextHtml ? `<div class="btn-info-text">${infoTextHtml}</div>` : ''}
+            `;
+
+            list.appendChild(card);
+        });
+
+        updatePreviewButtons();
+    }
+
+    function updateBtnType(idx, typeVal) {
+        if (typeVal === '채널추가') {
+            const hasExistingChannel = buttons.some((b, i) => i !== idx && b.type === '채널추가');
+            if (hasExistingChannel) {
+                document.getElementById('channelLimitModal').style.display = 'flex';
+                renderButtons();
+                return;
+            }
+        }
+
+        buttons[idx].type = typeVal;
+        buttons[idx].name = (typeVal === '채널추가') ? '채널 추가' : '';
+        buttons[idx].extraVal = '';
+
+        if (typeVal === '채널추가' && idx !== 0) {
+            const [targetBtn] = buttons.splice(idx, 1);
+            buttons.unshift(targetBtn);
+        }
+
+        renderButtons();
+    }
+
+    function updateBtnName(idx, inputElem) {
+        buttons[idx].name = inputElem.value;
+        const lenSpan = document.getElementById(`btnNameLen_${idx}`);
+        if(lenSpan) lenSpan.innerText = inputElem.value.length;
+        updatePreviewButtons();
+    }
+
+    function updateBtnNameSelect(idx, val) {
+        buttons[idx].name = val;
+        updatePreviewButtons();
+    }
+
+    function updateBtnData(idx, key, val) {
+        buttons[idx][key] = val;
+    }
+
+    function updatePreviewButtons() {
+        pvBtns.innerHTML = '';
+        let hasChannelAdd = false;
+
+        buttons.forEach((btn) => {
+            if (btn.type === '선택') return;
+
+            if (btn.type === '채널추가') {
+                hasChannelAdd = true;
+                const pvBtn = document.createElement('div');
+                pvBtn.className = 'pv-btn-yellow';
+                pvBtn.innerHTML = `<span class="channel-ch-icon">Ch+</span> 채널 추가`;
+                pvBtns.appendChild(pvBtn);
+            } else {
+                const pvBtn = document.createElement('div');
+                pvBtn.className = 'pv-btn';
+                pvBtn.innerText = btn.name || '버튼명';
+                pvBtns.appendChild(pvBtn);
+            }
+        });
+
+        pvChannelDesc.style.display = hasChannelAdd ? 'block' : 'none';
+    }
+
+    function removeBtn(idx) {
+        buttons.splice(idx, 1);
+        renderButtons();
+    }
+
+    /* 이미지를 GitHub 저장소의 images/ 폴더에 별도 파일로 커밋하고, raw URL을 반환 */
+    function sanitizeFileName(name) {
+        return name.replace(/[\\/\s]+/g, '_');
+    }
+
+    async function uploadImageToGithub(dataUrl, file) {
+        const path = `images/${Date.now()}_${sanitizeFileName(file.name)}`;
+        const base64Content = dataUrl.split(',')[1]; // "data:image/png;base64,XXXX" 에서 데이터 부분만 추출
+        const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/${path}`;
+
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: `이미지 업로드: ${path}`,
+                content: base64Content,
+                branch: GH_BRANCH
+            })
+        });
+
+        if (!res.ok) {
+            throw new Error(`이미지 업로드 실패 (${file.name})`);
+        }
+
+        return `https://raw.githubusercontent.com/${GH_USERNAME}/${GH_REPO}/${GH_BRANCH}/${path}`;
+    }
+
+    document.getElementById('templateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const selectedType = document.querySelector('input[name="templateType"]:checked').value;
+        const imgCheckbox = document.querySelector('input[name="itemListItem"][value="이미지"]');
+        const headerCheckbox = document.querySelector('input[name="itemListItem"][value="헤더"]');
+        const itemHlCheckbox = document.querySelector('input[name="itemListItem"][value="아이템 하이라이트"]');
+
+        // 발신프로필/템플릿명/카테고리/내용 등 항상 필요한 기본 항목부터 검증
+        if (!document.getElementById('senderId').value.trim()) {
+            return showAlertModal("⚠️ 발신프로필 ID를 입력해 주세요.", null, document.getElementById('senderId'));
+        }
+        if (!document.getElementById('templateName').value.trim()) {
+            return showAlertModal("⚠️ 템플릿명을 입력해 주세요.", null, document.getElementById('templateName'));
+        }
+        if (!document.getElementById('catMain').value) {
+            return showAlertModal("⚠️ 카테고리(대분류)를 선택해 주세요.", null, document.getElementById('catMain'));
+        }
+        if (!document.getElementById('catSub').value) {
+            return showAlertModal("⚠️ 카테고리(소분류)를 선택해 주세요.", null, document.getElementById('catSub'));
+        }
+        if (!document.getElementById('templateContent').value.trim()) {
+            return showAlertModal("⚠️ 템플릿 내용을 입력해 주세요.", null, document.getElementById('templateContent'));
+        }
+
+        const isImgRequired = (selectedType === '이미지형') || (selectedType === '아이템리스트형' && imgCheckbox && imgCheckbox.checked);
+        const isHeaderRequired = (selectedType === '아이템리스트형' && headerCheckbox && headerCheckbox.checked);
+        const isItemHlRequired = (selectedType === '아이템리스트형' && itemHlCheckbox && itemHlCheckbox.checked);
+
+        if (isImgRequired && !uploadedImgFile) {
+            return showAlertModal("⚠️ 이미지를 첨부해 주세요.");
+        }
+
+        const headerTextVal = document.getElementById('headerTextInput').value.trim();
+        if (isHeaderRequired && !headerTextVal) {
+            return showAlertModal("⚠️ 헤더 문구를 입력해 주세요.", null, document.getElementById('headerTextInput'));
+        }
+
+        const itemHlTitleVal = document.getElementById('itemHlTitle').value.trim();
+        const itemHlDescVal = document.getElementById('itemHlDesc').value.trim();
+        if (isItemHlRequired && (!itemHlTitleVal || !itemHlDescVal)) {
+            return showAlertModal("⚠️ 아이템 하이라이트의 타이틀과 내용을 모두 입력해 주세요.", null, document.getElementById('itemHlTitle'));
+        }
+
+        const itemListCheckbox = document.querySelector('input[name="itemListItem"][value="아이템 리스트"]');
+        const isItemListRequired = (selectedType === '아이템리스트형' && itemListCheckbox && itemListCheckbox.checked);
+        const itemListSummaryChecked = document.getElementById('itemListSummaryCheck').checked;
+        if (isItemListRequired) {
+            const hasEmptyItem = itemListData.some(it => !it.name.trim() || !it.content.trim());
+            if (hasEmptyItem) {
+                return showAlertModal("⚠️ 아이템 리스트의 모든 아이템명과 내용을 입력해 주세요.");
+            }
+            if (itemListSummaryChecked && (!itemListSummary.name.trim() || !itemListSummary.content.trim())) {
+                return showAlertModal("⚠️ 요약정보의 이름과 내용을 모두 입력해 주세요.");
+            }
+        }
+
+        const hlSubText = document.getElementById('highlightSubText').value.trim();
+        const hlMainText = document.getElementById('highlightMainText').value.trim();
+        if (selectedType === '강조표기형' && (!hlSubText || !hlMainText)) {
+            return showAlertModal("⚠️ 강조표기 보조문구와 강조표기 문구를 모두 입력해 주세요.", null, document.getElementById('highlightSubText'));
+        }
+
+        if (selectedType === '아이템리스트형') {
+            const checkedItems = document.querySelectorAll('input[name="itemListItem"]:checked');
+            if (checkedItems.length === 0) {
+                return showAlertModal("⚠️ 리스트형 입력항목을 최소 1개 이상 선택해 주세요.");
+            }
+        }
+
+        // GitHub 토큰 미연결은 사용자가 채워야 할 폼 입력란이 아니라 개발/배포 설정값이므로
+        // 기존과 동일하게 공용 알림창(showAlertModal)으로 안내한다.
+        if (!GH_TOKEN) return showAlertModal("⚠️ 테스트 모드입니다. GitHub 토큰을 연결해 주세요.");
+
+        const selectedItemList = Array.from(document.querySelectorAll('input[name="itemListItem"]:checked')).map(cb => cb.value);
+
+        const submitBtn = document.getElementById('submitBtn');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+
+        let finalImageUrl = '';
+        let finalThumbUrl = '';
+
+        try {
+            // 1. 이미지를 images/ 폴더에 별도 파일로 커밋
+            if (isImgRequired && uploadedImgFile) {
+                submitBtn.innerText = '이미지 업로드 중...';
+                finalImageUrl = await uploadImageToGithub(uploadedBase64Img, uploadedImgFile);
+            }
+            // 2. 아이템 하이라이트 썸네일도 별도 파일로 커밋 (선택 항목)
+            if (isItemHlRequired && uploadedThumbFile) {
+                submitBtn.innerText = '썸네일 업로드 중...';
+                finalThumbUrl = await uploadImageToGithub(uploadedThumbImg, uploadedThumbFile);
+            }
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+            return showAlertModal(`❌ ${err.message || '이미지 업로드 중 오류가 발생했습니다.'}`);
+        }
+
+        submitBtn.innerText = '신청서 등록 중...';
+
+        const formData = {
+            id: Date.now(),
+            senderId: document.getElementById('senderId').value,
+            templateCodeType: document.querySelector('input[name="codeType"]:checked').value,
+            templateCode: document.getElementById('templateCode').value || 'AUTO',
+            templateName: templateName.value,
+            category: {
+                main: document.getElementById('catMain').value,
+                sub: document.getElementById('catSub').value
+            },
+            templateType: selectedType,
+            itemListItems: selectedType === '아이템리스트형' ? selectedItemList : [],
+            imageUrl: isImgRequired ? finalImageUrl : '',
+            headerText: isHeaderRequired ? headerTextVal : '',
+            itemHighlight: isItemHlRequired ? {
+                title: itemHlTitleVal,
+                description: itemHlDescVal,
+                thumbUrl: finalThumbUrl
+            } : null,
+            itemList: isItemListRequired ? {
+                items: itemListData.map(it => ({ name: it.name, content: it.content })),
+                summary: itemListSummaryChecked ? { ...itemListSummary } : null
+            } : null,
+            highlightText: selectedType === '강조표기형' ? {
+                sub: hlSubText,
+                main: hlMainText
+            } : null,
+            templateContent: templateContent.value,
+            extraContent: document.getElementById('useExtra').checked ? extraContent.value : '',
+            previewMessage: document.getElementById('usePreviewMsg').checked ? document.getElementById('previewMsgInput').value : '',
+            mainLinks: document.getElementById('useMainLink').checked ? {
+                pc: document.getElementById('linkPc').value,
+                mobile: document.getElementById('linkMobile').value,
+                android: document.getElementById('linkAndroid').value,
+                ios: document.getElementById('linkIos').value
+            } : null,
+            options: {
+                useExtra: document.getElementById('useExtra').checked,
+                useButton: document.getElementById('useButton').checked,
+                usePreviewMsg: document.getElementById('usePreviewMsg').checked,
+                useMainLink: document.getElementById('useMainLink').checked,
+                useSecurity: document.getElementById('useSecurity').checked
+            },
+            buttons: buttons,
+            createdAt: new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
+        };
+
+        try {
+            const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/data.json`;
+            const res = await fetch(url, { headers: { "Authorization": `token ${GH_TOKEN}` } });
+            const fileData = await res.json();
+            const currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+
+            currentData.push(formData);
+
+            const putRes = await fetch(url, {
+                method: "PUT",
+                headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: `Template submitted by ${formData.senderId}`,
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
+                    sha: fileData.sha,
+                    branch: GH_BRANCH
+                })
+            });
+
+            if (putRes.ok) {
+                showAlertModal("🎉 템플릿 신청이 등록되었습니다!", () => location.reload());
+            } else throw new Error();
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+            showAlertModal("❌ 제출 중 오류가 발생했습니다.");
+        }
+    });
+</script>
+
+</body>
+</html>
