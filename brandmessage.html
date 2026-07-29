@@ -1099,6 +1099,13 @@
         </div>
 
         <div class="form-group flex-row">
+            <span class="label"><span style="font-size: 10px; margin-right: 6px;">■</span>담당자 이메일 <span class="required">*</span></span>
+            <input type="text" id="manager-email-input" class="input-text" placeholder="신청 결과를 안내받을 이메일 주소를 입력해 주세요">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="form-group flex-row">
             <span class="label"><span style="font-size: 10px; margin-right: 6px;">■</span>발신프로필 ID <span class="required">*</span></span>
             <input type="text" id="profile-id-input" class="input-text" placeholder="@채널아이디 (예: @mycompany)">
         </div>
@@ -4729,6 +4736,13 @@
     // 현재 선택된 템플릿 유형을 기준으로 화면에 표시되는 필수 항목들을 검사한다.
     // 문제가 없으면 null, 있으면 { msg, focus } 를 반환한다. (focus는 해당 입력란으로 이동/포커스하는 함수, 없을 수도 있음)
     function validateRequiredFields() {
+        const managerEmailVal = document.getElementById('manager-email-input').value.trim();
+        if (isBlank(managerEmailVal)) {
+            return { msg: '담당자 이메일을 입력해 주세요.', focus: () => focusEl(document.getElementById('manager-email-input')) };
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(managerEmailVal)) {
+            return { msg: '담당자 이메일 형식이 올바르지 않습니다.', focus: () => focusEl(document.getElementById('manager-email-input')) };
+        }
         if (isBlank(document.getElementById('profile-id-input').value)) {
             return { msg: '발신프로필 ID를 입력해 주세요.', focus: () => focusEl(document.getElementById('profile-id-input')) };
         }
