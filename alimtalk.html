@@ -1475,8 +1475,30 @@
         return name.replace(/[\\/\s]+/g, '_');
     }
 
+    // "20260730_143205" 형식의 날짜_시간 스탬프 (파일명 충돌 방지 + 언제 신청된 파일인지 한눈에 보이게)
+    function dateStamp() {
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+    }
+
+    // 이미 존재하는 경로면 "이름(1).png", "이름(2).png" 식으로 비어있는 이름을 찾아 반환
+    async function getUniquePath(basePath) {
+        const dotIndex = basePath.lastIndexOf('.');
+        const stem = dotIndex > -1 ? basePath.slice(0, dotIndex) : basePath;
+        const ext = dotIndex > -1 ? basePath.slice(dotIndex) : '';
+        let candidate = basePath;
+        let counter = 1;
+        while (true) {
+            const res = await fetch(`${WORKER_URL}/contents/${candidate}`);
+            if (!res.ok) return candidate; // 404 = 비어있는 이름, 사용 가능
+            candidate = `${stem}(${counter})${ext}`;
+            counter++;
+        }
+    }
+
     async function uploadImageToGithub(dataUrl, file) {
-        const path = `images/${Date.now()}_${sanitizeFileName(file.name)}`;
+        const path = await getUniquePath(`images/${dateStamp()}_${sanitizeFileName(file.name)}`);
         const base64Content = dataUrl.split(',')[1]; // "data:image/png;base64,XXXX" 에서 데이터 부분만 추출
         const url = `${WORKER_URL}/contents/${path}`;
 
@@ -1695,25 +1717,57 @@
             }
             html += row('신청 일시', esc(data.createdAt));
 
-            return `<!DOCTYPE html>
-<html lang="ko"><head><meta charset="UTF-8"><title>템플릿 신청 - ${esc(data.senderId)}</title>
-<style>
-body{font-family:-apple-system,'Malgun Gothic',sans-serif;background:#f4f5f7;margin:0;padding:24px;}
-.card{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
-h1{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #333;}
-.row{display:flex;padding:10px 0;border-bottom:1px solid #eee;}
-.label{width:140px;flex-shrink:0;font-weight:600;color:#555;font-size:13px;}
-.value{flex:1;font-size:14px;color:#222;word-break:break-word;}
-</style></head>
-<body><div class="card"><h1>카카오 알림톡 템플릿 신청서</h1>${html}</div></body></html>`;
+            return `<div style="max-width:720px;margin:40px auto 0;background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,.08);font-family:-apple-system,'Malgun Gothic',sans-serif;">
+<h2 style="font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #333;">📋 제출 데이터 요약</h2>
+<style>#__summary__ .row{display:flex;padding:10px 0;border-bottom:1px solid #eee;} #__summary__ .label{width:140px;flex-shrink:0;font-weight:600;color:#555;font-size:13px;} #__summary__ .value{flex:1;font-size:14px;color:#222;word-break:break-word;}</style>
+<div id="__summary__">${html}</div>
+</div>`;
+        }
+
+        // 제출 시점의 실제 페이지(입력폼 + 미리보기)를 그대로 정적 HTML로 굳힌다.
+        // 라이브 DOM의 각 입력란 현재값을 클론에 속성으로 박아넣고, 스크립트는 제거해서
+        // 파일을 열었을 때 JS가 다시 실행되며 값이 초기화되지 않고 그 순간 화면 그대로 보이게 한다.
+        function captureFullPageSnapshot() {
+            const clone = document.documentElement.cloneNode(true);
+            const liveFields = document.querySelectorAll('input, textarea, select');
+            const cloneFields = clone.querySelectorAll('input, textarea, select');
+
+            liveFields.forEach((live, i) => {
+                const target = cloneFields[i];
+                if (!target) return;
+                if (live.tagName === 'TEXTAREA') {
+                    target.textContent = live.value;
+                } else if (live.tagName === 'SELECT') {
+                    Array.from(target.options).forEach((opt, idx) => {
+                        if (live.options[idx] && live.options[idx].selected) opt.setAttribute('selected', 'selected');
+                        else opt.removeAttribute('selected');
+                    });
+                } else if (live.type === 'checkbox' || live.type === 'radio') {
+                    if (live.checked) target.setAttribute('checked', 'checked');
+                    else target.removeAttribute('checked');
+                } else if (live.type === 'file') {
+                    // 파일 입력은 정적 스냅샷에서 의미가 없으므로 건너뜀 (이미지는 미리보기 영역에 이미 반영되어 있음)
+                } else {
+                    target.setAttribute('value', live.value);
+                }
+            });
+
+            clone.querySelectorAll('script').forEach(s => s.remove());
+            clone.querySelectorAll('button, input, select, textarea').forEach(el => el.setAttribute('disabled', 'disabled'));
+
+            return '<!DOCTYPE html>\n' + clone.outerHTML;
+        }
+
+        // 화면 클론(위쪽, 실제 UI 그대로)과 데이터 요약(아래쪽)을 한 파일로 합친다.
+        function buildFullSnapshot(data) {
+            const pageClone = captureFullPageSnapshot();
+            const summaryFragment = buildSnapshotHtml(data);
+            return pageClone.replace('</body>', summaryFragment + '</body>');
         }
 
         try {
-            const snapshotHtml = buildSnapshotHtml(formData);
-            const now = new Date();
-            const pad = (n) => String(n).padStart(2, '0');
-            const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-            const snapshotPath = `submissions/${dateStr}_${sanitizeFileName(formData.senderId || 'unknown')}.html`;
+            const snapshotHtml = buildFullSnapshot(formData);
+            const snapshotPath = await getUniquePath(`submissions/${dateStamp()}_${sanitizeFileName(formData.senderId || 'unknown')}.html`);
             await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -1758,7 +1812,7 @@ h1{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #3
             });
 
             if (putRes.ok) {
-                showAlertModal("🎉 템플릿 신청이 등록되었습니다!", () => location.reload());
+                showAlertModal("🎉 템플릿 신청이 완료되었습니다!", () => location.reload());
             } else {
                 const errBody = await putRes.json().catch(() => ({}));
                 throw new Error(`데이터 저장 실패 (${putRes.status}: ${errBody.message || '알 수 없는 오류'})`);
