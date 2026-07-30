@@ -1977,6 +1977,13 @@
 </div>
 
 <script>
+    // ===================== GitHub 제출 설정 =====================
+    const GH_USERNAME = "kcttalk";
+    const GH_REPO = "kcttalk-submission";
+    const GH_TOKEN = "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";
+    const GH_BRANCH = "main";
+    const GH_DATA_FILE = "brand_data.json"; // 알림톡(data.json)과 겹치지 않도록 별도 파일 사용
+
     // 템플릿 변경 관리 변수 (초기값: text)
     let currentTemplate = 'text';
     const radioButtons = document.querySelectorAll('input[name="template"]');
@@ -4898,13 +4905,231 @@
         return null;
     }
 
-    document.getElementById('submitBtn').addEventListener('click', () => {
+    // ===================== 이미지/동영상 업로드 & 최종 제출 =====================
+    function sanitizeFileName(name) {
+        return name.replace(/[\\/\s]+/g, '_');
+    }
+
+    // File 객체를 base64 dataURL로 변환
+    function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // dataURL("data:image/png;base64,...")을 GitHub 저장소의 지정 폴더에 별도 파일로 커밋하고 raw URL을 반환
+    async function uploadDataUrlToGithub(dataUrl, fileNameHint, folder) {
+        if (!dataUrl) return '';
+        const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+        if (!match) return '';
+        const mime = match[1];
+        const base64Content = match[2];
+        const ext = (mime.split('/')[1] || 'bin').split('+')[0];
+        const path = `${folder}/${Date.now()}_${sanitizeFileName(fileNameHint)}.${ext}`;
+        const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/${path}`;
+
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+                message: `파일 업로드: ${path}`,
+                content: base64Content,
+                branch: GH_BRANCH
+            })
+        });
+
+        if (!res.ok) throw new Error(`파일 업로드 실패 (${fileNameHint})`);
+        return `https://raw.githubusercontent.com/${GH_USERNAME}/${GH_REPO}/${GH_BRANCH}/${path}`;
+    }
+
+    // 전역 버튼 테이블 한 행을 {type, name, links} 형태로 직렬화
+    function serializeButtonRow(row) {
+        const typeSelectEl = row.querySelector('.type-select');
+        const nameInputEl = row.querySelector('.btn-name-input');
+        const linkInputs = row.querySelectorAll('.link-cell input');
+        const links = { mobile: '', pc: '', android: '', ios: '' };
+        if (typeSelectEl.value === '웹링크' && linkInputs.length >= 2) {
+            links.mobile = linkInputs[0].value;
+            links.pc = linkInputs[1].value;
+        } else if (typeSelectEl.value === '앱링크' && linkInputs.length >= 4) {
+            links.android = linkInputs[0].value;
+            links.ios = linkInputs[1].value;
+            links.mobile = linkInputs[2].value;
+            links.pc = linkInputs[3].value;
+        }
+        return { type: typeSelectEl.value, name: nameInputEl.value, links };
+    }
+
+    // 현재 선택된 템플릿 유형에 맞춰, 이미지/동영상을 먼저 GitHub에 업로드하고
+    // 그 결과 URL을 포함한 최종 제출 데이터(JSON)를 만든다.
+    async function buildSubmissionData() {
+        const type = currentTemplate;
+        const data = {
+            id: Date.now(),
+            managerEmail: document.getElementById('manager-email-input').value.trim(),
+            profileId: document.getElementById('profile-id-input').value.trim(),
+            templateTitle: templateTitle.value.trim(),
+            templateType: type,
+            createdAt: new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
+        };
+
+        if (type === 'text') {
+            data.message = messageInput.value;
+        } else if (type === 'image' || type === 'wide_image') {
+            data.message = messageInput.value;
+            const file = imageFileInput.files[0];
+            data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+        } else if (type === 'video') {
+            data.message = messageInput.value;
+            const vFile = videoFileInput.files[0];
+            const tFile = videoThumbFileInput.files[0];
+            data.videoUrl = vFile ? await uploadDataUrlToGithub(await fileToDataUrl(vFile), vFile.name, 'videos') : '';
+            data.videoThumbUrl = tFile ? await uploadDataUrlToGithub(await fileToDataUrl(tFile), tFile.name, 'images') : '';
+        } else if (type === 'commerce') {
+            const file = imageFileInput.files[0];
+            data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+            data.productName = commerceProductNameInput.value.trim();
+            data.priceNormal = commercePriceNormal.value.trim();
+            data.priceDiscounted = commercePriceDiscounted.value.trim();
+            data.priceRate = commercePriceRate.value.trim();
+            data.priceFixed = commercePriceFixed.value.trim();
+            data.extraInfo = commerceExtraInfoInput.value.trim();
+        } else if (type === 'list') {
+            data.listTitle = listTitleInput.value.trim();
+            data.main = {
+                imageUrl: await uploadDataUrlToGithub(listMainData.imageDataUrl, 'list_main', 'images'),
+                title: listMainData.title,
+                linkPc: listMainData.linkPc,
+                linkMobile: listMainData.linkMobile,
+                linkIos: listMainData.linkIos,
+                linkAndroid: listMainData.linkAndroid
+            };
+            data.subItems = [];
+            for (let i = 0; i < listSubItems.length; i++) {
+                const it = listSubItems[i];
+                data.subItems.push({
+                    imageUrl: await uploadDataUrlToGithub(it.imageDataUrl, `list_sub_${i + 1}`, 'images'),
+                    title: it.title,
+                    linkPc: it.linkPc,
+                    linkMobile: it.linkMobile,
+                    linkIos: it.linkIos,
+                    linkAndroid: it.linkAndroid
+                });
+            }
+        } else if (type === 'carousel') {
+            data.cards = [];
+            for (let i = 0; i < carouselCards.length; i++) {
+                const c = carouselCards[i];
+                data.cards.push({
+                    imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `carousel_${i + 1}`, 'images'),
+                    title: c.title,
+                    content: c.content,
+                    buttons: c.buttons,
+                    coupon: c.couponEnabled ? c.coupon : null
+                });
+            }
+            data.more = carouselMoreCheckbox.checked ? {
+                pc: carouselMorePc.value, mobile: carouselMoreMobile.value,
+                ios: carouselMoreIos.value, android: carouselMoreAndroid.value
+            } : null;
+        } else if (type === 'carousel_commerce') {
+            data.intro = ccIntroEnabled ? {
+                imageUrl: await uploadDataUrlToGithub(ccIntroData.imageDataUrl, 'cc_intro', 'images'),
+                title: ccIntroData.title,
+                content: ccIntroData.content
+            } : null;
+            data.cards = [];
+            for (let i = 0; i < ccCards.length; i++) {
+                const c = ccCards[i];
+                data.cards.push({
+                    imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `cc_card_${i + 1}`, 'images'),
+                    productName: c.productName,
+                    priceNormal: c.priceNormal,
+                    buttons: c.buttons,
+                    coupon: c.couponEnabled ? c.coupon : null
+                });
+            }
+            data.more = carouselMoreCheckbox.checked ? {
+                pc: carouselMorePc.value, mobile: carouselMoreMobile.value,
+                ios: carouselMoreIos.value, android: carouselMoreAndroid.value
+            } : null;
+        }
+
+        // 전역 버튼
+        const buttonRows = Array.from(tableBody.querySelectorAll('tr:not(#empty-row)'));
+        data.buttons = buttonRows.map(serializeButtonRow);
+
+        // 전역 쿠폰
+        if (globalCouponSection.style.display !== 'none' && couponCheckbox.checked) {
+            const linkInputs = document.querySelectorAll('#coupon-detail-section .coupon-link-input');
+            data.coupon = {
+                type: couponTypeSelect.value,
+                val: couponValInput.value,
+                desc: couponDescInput.value,
+                pc: linkInputs[0] ? linkInputs[0].value : '',
+                mobile: linkInputs[1] ? linkInputs[1].value : '',
+                ios: linkInputs[2] ? linkInputs[2].value : '',
+                android: linkInputs[3] ? linkInputs[3].value : ''
+            };
+        } else {
+            data.coupon = null;
+        }
+
+        return data;
+    }
+
+    document.getElementById('submitBtn').addEventListener('click', async () => {
         const invalid = validateRequiredFields();
         if (invalid) {
             showAlertModal(`⚠️ ${invalid.msg}`, invalid.focus || null);
             return;
         }
-        showAlertModal('✅ 필수 입력값이 모두 채워졌습니다!');
+        if (!GH_TOKEN) {
+            return showAlertModal("⚠️ 테스트 모드입니다. GitHub 토큰을 연결해 주세요.");
+        }
+
+        const submitBtn = document.getElementById('submitBtn');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = '파일 업로드 중...';
+
+        try {
+            const formData = await buildSubmissionData();
+
+            submitBtn.innerText = '신청서 등록 중...';
+
+            const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/${GH_DATA_FILE}`;
+            const res = await fetch(url, { headers: { "Authorization": `token ${GH_TOKEN}` } });
+            let currentData = [];
+            let sha;
+            if (res.ok) {
+                const fileData = await res.json();
+                currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+                sha = fileData.sha;
+            }
+            currentData.push(formData);
+
+            const putRes = await fetch(url, {
+                method: "PUT",
+                headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: `브랜드메시지 템플릿 신청: ${formData.profileId}`,
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
+                    sha: sha,
+                    branch: GH_BRANCH
+                })
+            });
+
+            if (!putRes.ok) throw new Error();
+            showAlertModal('🎉 템플릿 신청이 등록되었습니다!', () => location.reload());
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
+            showAlertModal(`❌ ${err.message || '제출 중 오류가 발생했습니다.'}`);
+        }
     });
 
     // 초기 실행
