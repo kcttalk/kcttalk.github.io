@@ -4782,7 +4782,7 @@
             if (isBlank(commerceProductNameInput.value)) {
                 return { msg: '상품명을 입력해 주세요.', focus: () => focusEl(commerceProductNameInput) };
             }
-            if (isBlank(commercePriceNormal.value)) {
+            if (!commerceFixedVarCheckbox.checked && isBlank(commercePriceNormal.value)) {
                 return { msg: '정상 가격을 입력해 주세요.', focus: () => focusEl(commercePriceNormal) };
             }
         } else if (type === 'list') {
@@ -4848,7 +4848,7 @@
                 const label = `캐러셀커머스 카드 ${i + 1}`;
                 if (isBlank(c.imageDataUrl)) return { msg: `${label}의 이미지를 첨부해 주세요.`, focus: () => switchCcTab(i) };
                 if (isBlank(c.productName)) return { msg: `${label}의 상품명을 입력해 주세요.`, focus: () => switchCcTab(i) };
-                if (isBlank(c.priceNormal)) return { msg: `${label}의 정상 가격을 입력해 주세요.`, focus: () => switchCcTab(i) };
+                if (!c.fixedVar && isBlank(c.priceNormal)) return { msg: `${label}의 정상 가격을 입력해 주세요.`, focus: () => switchCcTab(i) };
                 if (!c.buttons || c.buttons.length === 0) return { msg: `${label}에 버튼을 최소 1개 추가해 주세요.`, focus: () => switchCcTab(i) };
                 for (let b = 0; b < c.buttons.length; b++) {
                     const err = validateButtonRow(c.buttons[b].type, c.buttons[b].name, c.buttons[b].links, `${label}의 ${b + 1}번째`);
