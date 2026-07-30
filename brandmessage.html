@@ -5143,7 +5143,6 @@
         const esc = (s) => (s === null || s === undefined ? '' : s.toString()).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
         const row = (label, value) => value ? `<div class="row"><div class="label">${esc(label)}</div><div class="value">${value}</div></div>` : '';
-        const img = (url, w) => url ? `<img src="${esc(url)}" style="max-width:${w || 300}px;border:1px solid #ddd;border-radius:8px;display:block;margin-bottom:6px;">` : '';
 
         const renderButton = (b) => {
             const links = b.links || {};
@@ -5162,9 +5161,9 @@
         html += row('템플릿 유형', esc(data.templateType));
 
         if (data.message) html += row('내용', `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${nl2br(data.message)}</pre>`);
-        if (data.imageUrl) html += row('이미지', img(data.imageUrl));
-        if (data.videoUrl) html += row('동영상', `<a href="${esc(data.videoUrl)}" target="_blank">${esc(data.videoUrl)}</a>`);
-        if (data.videoThumbUrl) html += row('동영상 썸네일', img(data.videoThumbUrl));
+        if (data.imageUrl) html += `<div class="row"><div class="label">이미지</div><div class="value"></div></div>`;
+        if (data.videoUrl) html += `<div class="row"><div class="label">동영상</div><div class="value"></div></div>`;
+        if (data.videoThumbUrl) html += `<div class="row"><div class="label">동영상 썸네일</div><div class="value"></div></div>`;
 
         if (data.productName) {
             html += row('상품명', esc(data.productName));
@@ -5180,21 +5179,21 @@
         if (data.listTitle) {
             html += row('리스트 제목', esc(data.listTitle));
             if (data.main) {
-                html += row('메인 아이템', `${img(data.main.imageUrl, 200)}<b>${esc(data.main.title)}</b><br>Mobile: ${esc(data.main.linkMobile)}`);
+                html += row('메인 아이템', `<b>${esc(data.main.title)}</b><br>Mobile: ${esc(data.main.linkMobile)}`);
             }
             if (data.subItems && data.subItems.length) {
-                const sub = data.subItems.map((it, i) => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;">${img(it.imageUrl, 150)}<b>#${i + 1} ${esc(it.title)}</b><br>Mobile: ${esc(it.linkMobile)}</div>`).join('');
+                const sub = data.subItems.map((it, i) => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;"><b>#${i + 1} ${esc(it.title)}</b><br>Mobile: ${esc(it.linkMobile)}</div>`).join('');
                 html += row('서브 아이템', sub);
             }
         }
 
         if (data.intro) {
-            html += row('캐러셀 인트로', `${img(data.intro.imageUrl, 200)}<b>${esc(data.intro.title)}</b><br>${nl2br(data.intro.content)}`);
+            html += row('캐러셀 인트로', `<b>${esc(data.intro.title)}</b><br>${nl2br(data.intro.content)}`);
         }
 
         if (data.cards && data.cards.length) {
             const cardsHtml = data.cards.map((c, i) => {
-                let inner = img(c.imageUrl, 200);
+                let inner = '';
                 if (c.title) inner += `<b>${esc(c.title)}</b><br>${nl2br(c.content)}<br>`;
                 if (c.productName) inner += `<b>${esc(c.productName)}</b> — 정상가 ${esc(c.priceNormal)}<br>`;
                 if (c.buttons && c.buttons.length) inner += c.buttons.map(renderButton).join('');

@@ -1697,10 +1697,10 @@
             html += row('카테고리', `${esc(data.category.main)} &gt; ${esc(data.category.sub)}`);
             html += row('템플릿 유형', esc(data.templateType));
             if (data.itemListItems.length) html += row('리스트형 입력항목', esc(data.itemListItems.join(', ')));
-            if (data.imageUrl) html += row('이미지', `<img src="${esc(data.imageUrl)}" style="max-width:300px;border:1px solid #ddd;border-radius:8px;">`);
+            if (data.imageUrl) html += `<div class="row"><div class="label">이미지</div><div class="value"></div></div>`;
             if (data.headerText) html += row('헤더 문구', nl2br(data.headerText));
             if (data.itemHighlight) {
-                html += row('아이템 하이라이트', `${nl2br(data.itemHighlight.title)}<br>${nl2br(data.itemHighlight.description)}` + (data.itemHighlight.thumbUrl ? `<br><img src="${esc(data.itemHighlight.thumbUrl)}" style="max-width:200px;border:1px solid #ddd;border-radius:8px;margin-top:6px;">` : ''));
+                html += row('아이템 하이라이트', `${nl2br(data.itemHighlight.title)}<br>${nl2br(data.itemHighlight.description)}`);
             }
             if (data.itemList) {
                 let itemsHtml = data.itemList.items.map(it => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;"><b>${esc(it.name)}</b> — ${esc(it.content)}</div>`).join('');
