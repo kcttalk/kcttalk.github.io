@@ -1980,8 +1980,8 @@
     // ===================== GitHub 제출 설정 =====================
     const GH_USERNAME = "kcttalk";
     const GH_REPO = "kcttalk-submission";
-    const GH_TOKEN = "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";
     const GH_BRANCH = "main";
+    const WORKER_URL = "https://kct-submit-proxy.hbyaang.workers.dev"; // Cloudflare Worker 프록시 주소 (토큰은 여기 뒤에 안전하게 보관됨)
     const GH_DATA_FILE = "brand_data.json"; // 알림톡(data.json)과 겹치지 않도록 별도 파일 사용
 
     // 템플릿 변경 관리 변수 (초기값: text)
@@ -4929,11 +4929,11 @@
         const base64Content = match[2];
         const ext = (mime.split('/')[1] || 'bin').split('+')[0];
         const path = `${folder}/${Date.now()}_${sanitizeFileName(fileNameHint)}.${ext}`;
-        const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/${path}`;
+        const url = `${WORKER_URL}/contents/${path}`;
 
         const res = await fetch(url, {
             method: "PUT",
-            headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 message: `파일 업로드: ${path}`,
                 content: base64Content,
@@ -5087,9 +5087,7 @@
             showAlertModal(`⚠️ ${invalid.msg}`, invalid.focus || null);
             return;
         }
-        if (!GH_TOKEN) {
-            return showAlertModal("⚠️ 테스트 모드입니다. GitHub 토큰을 연결해 주세요.");
-        }
+        // (토큰은 이제 Cloudflare Worker 뒤에 안전하게 보관되어 있어 클라이언트에서 확인할 필요가 없습니다)
 
         const submitBtn = document.getElementById('submitBtn');
         const originalBtnText = submitBtn.innerText;
@@ -5101,8 +5099,8 @@
 
             submitBtn.innerText = '신청서 등록 중...';
 
-            const url = `https://api.github.com/repos/${GH_USERNAME}/${GH_REPO}/contents/${GH_DATA_FILE}`;
-            const res = await fetch(url, { headers: { "Authorization": `token ${GH_TOKEN}` } });
+            const url = `${WORKER_URL}/contents/${GH_DATA_FILE}`;
+            const res = await fetch(url);
             let currentData = [];
             let sha;
             if (res.ok) {
@@ -5114,7 +5112,7 @@
 
             const putRes = await fetch(url, {
                 method: "PUT",
-                headers: { "Authorization": `token ${GH_TOKEN}`, "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: `브랜드메시지 템플릿 신청: ${formData.profileId}`,
                     content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
