@@ -1664,6 +1664,70 @@
             createdAt: new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
         };
 
+        function buildSnapshotHtml(data) {
+            const esc = (s) => (s || '').toString().replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const row = (label, value) => value ? `<div class="row"><div class="label">${esc(label)}</div><div class="value">${value}</div></div>` : '';
+            const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
+
+            let html = `<div class="row"><div class="label">담당자 이메일</div><div class="value">${esc(data.managerEmail)}</div></div>`;
+            html += row('발신프로필 ID', esc(data.senderId));
+            html += row('템플릿명', esc(data.templateName));
+            html += row('카테고리', `${esc(data.category.main)} &gt; ${esc(data.category.sub)}`);
+            html += row('템플릿 유형', esc(data.templateType));
+            if (data.itemListItems.length) html += row('리스트형 입력항목', esc(data.itemListItems.join(', ')));
+            if (data.imageUrl) html += row('이미지', `<img src="${esc(data.imageUrl)}" style="max-width:300px;border:1px solid #ddd;border-radius:8px;">`);
+            if (data.headerText) html += row('헤더 문구', nl2br(data.headerText));
+            if (data.itemHighlight) {
+                html += row('아이템 하이라이트', `${nl2br(data.itemHighlight.title)}<br>${nl2br(data.itemHighlight.description)}` + (data.itemHighlight.thumbUrl ? `<br><img src="${esc(data.itemHighlight.thumbUrl)}" style="max-width:200px;border:1px solid #ddd;border-radius:8px;margin-top:6px;">` : ''));
+            }
+            if (data.itemList) {
+                let itemsHtml = data.itemList.items.map(it => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;"><b>${esc(it.name)}</b> — ${esc(it.content)}</div>`).join('');
+                if (data.itemList.summary) itemsHtml += `<div style="padding-top:6px;"><b>요약:</b> ${esc(data.itemList.summary.name)} — ${esc(data.itemList.summary.content)}</div>`;
+                html += row('아이템 리스트', itemsHtml);
+            }
+            if (data.highlightText) html += row('강조표기', `${nl2br(data.highlightText.sub)}<br>${nl2br(data.highlightText.main)}`);
+            html += row('템플릿 내용', `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${nl2br(data.templateContent)}</pre>`);
+            if (data.extraContent) html += row('부가 정보', nl2br(data.extraContent));
+            if (data.previewMessage) html += row('미리보기 메시지', nl2br(data.previewMessage));
+            if (data.mainLinks) html += row('바로연결 링크', `PC: ${esc(data.mainLinks.pc)}<br>Mobile: ${esc(data.mainLinks.mobile)}<br>Android: ${esc(data.mainLinks.android)}<br>iOS: ${esc(data.mainLinks.ios)}`);
+            if (data.buttons && data.buttons.length) {
+                html += row('버튼', data.buttons.map(b => `<div style="padding:4px 0;">[${esc(b.type)}] ${esc(b.name)} ${b.link ? '- ' + esc(b.link) : ''}</div>`).join(''));
+            }
+            html += row('신청 일시', esc(data.createdAt));
+
+            return `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>템플릿 신청 - ${esc(data.senderId)}</title>
+<style>
+body{font-family:-apple-system,'Malgun Gothic',sans-serif;background:#f4f5f7;margin:0;padding:24px;}
+.card{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+h1{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #333;}
+.row{display:flex;padding:10px 0;border-bottom:1px solid #eee;}
+.label{width:140px;flex-shrink:0;font-weight:600;color:#555;font-size:13px;}
+.value{flex:1;font-size:14px;color:#222;word-break:break-word;}
+</style></head>
+<body><div class="card"><h1>카카오 알림톡 템플릿 신청서</h1>${html}</div></body></html>`;
+        }
+
+        try {
+            const snapshotHtml = buildSnapshotHtml(formData);
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+            const snapshotPath = `submissions/${dateStr}_${sanitizeFileName(formData.senderId || 'unknown')}.html`;
+            await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: `신청 스냅샷: ${snapshotPath}`,
+                    content: btoa(unescape(encodeURIComponent(snapshotHtml))),
+                    branch: GH_BRANCH
+                })
+            });
+        } catch (snapErr) {
+            // 스냅샷 저장 실패는 전체 제출을 막지 않는다 (data.json에는 이미 기록됨)
+            console.error('스냅샷 저장 실패:', snapErr);
+        }
+
         try {
             const url = `${WORKER_URL}/contents/data.json`;
             const res = await fetch(url);

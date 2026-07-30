@@ -5083,6 +5083,96 @@
         return data;
     }
 
+    function buildSnapshotHtml(data) {
+        const esc = (s) => (s === null || s === undefined ? '' : s.toString()).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
+        const row = (label, value) => value ? `<div class="row"><div class="label">${esc(label)}</div><div class="value">${value}</div></div>` : '';
+        const img = (url, w) => url ? `<img src="${esc(url)}" style="max-width:${w || 300}px;border:1px solid #ddd;border-radius:8px;display:block;margin-bottom:6px;">` : '';
+
+        const renderButton = (b) => {
+            const links = b.links || {};
+            const linkParts = ['pc', 'mobile', 'android', 'ios'].filter(k => links[k]).map(k => `${k}: ${esc(links[k])}`).join(' / ');
+            return `<div style="padding:4px 0;">[${esc(b.type)}] ${esc(b.name)}${linkParts ? ' — ' + linkParts : ''}</div>`;
+        };
+        const renderCoupon = (c) => {
+            if (!c) return '';
+            const links = ['pc', 'mobile', 'ios', 'android'].filter(k => c[k]).map(k => `${k}: ${esc(c[k])}`).join(' / ');
+            return `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #ddd;"><b>쿠폰</b> [${esc(c.type)}]${c.val ? ' ' + esc(c.val) : ''} — ${esc(c.desc)}${links ? '<br>' + links : ''}</div>`;
+        };
+
+        let html = row('담당자 이메일', esc(data.managerEmail));
+        html += row('발신프로필 ID', esc(data.profileId));
+        html += row('템플릿명', esc(data.templateTitle));
+        html += row('템플릿 유형', esc(data.templateType));
+
+        if (data.message) html += row('내용', `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${nl2br(data.message)}</pre>`);
+        if (data.imageUrl) html += row('이미지', img(data.imageUrl));
+        if (data.videoUrl) html += row('동영상', `<a href="${esc(data.videoUrl)}" target="_blank">${esc(data.videoUrl)}</a>`);
+        if (data.videoThumbUrl) html += row('동영상 썸네일', img(data.videoThumbUrl));
+
+        if (data.productName) {
+            html += row('상품명', esc(data.productName));
+            html += row('가격', [
+                data.priceNormal ? `정상가 ${esc(data.priceNormal)}` : '',
+                data.priceDiscounted ? `할인가 ${esc(data.priceDiscounted)}` : '',
+                data.priceRate ? `할인율 ${esc(data.priceRate)}%` : '',
+                data.priceFixed ? `정액할인 ${esc(data.priceFixed)}` : ''
+            ].filter(Boolean).join(' / '));
+            if (data.extraInfo) html += row('부가정보', nl2br(data.extraInfo));
+        }
+
+        if (data.listTitle) {
+            html += row('리스트 제목', esc(data.listTitle));
+            if (data.main) {
+                html += row('메인 아이템', `${img(data.main.imageUrl, 200)}<b>${esc(data.main.title)}</b><br>Mobile: ${esc(data.main.linkMobile)}`);
+            }
+            if (data.subItems && data.subItems.length) {
+                const sub = data.subItems.map((it, i) => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;">${img(it.imageUrl, 150)}<b>#${i + 1} ${esc(it.title)}</b><br>Mobile: ${esc(it.linkMobile)}</div>`).join('');
+                html += row('서브 아이템', sub);
+            }
+        }
+
+        if (data.intro) {
+            html += row('캐러셀 인트로', `${img(data.intro.imageUrl, 200)}<b>${esc(data.intro.title)}</b><br>${nl2br(data.intro.content)}`);
+        }
+
+        if (data.cards && data.cards.length) {
+            const cardsHtml = data.cards.map((c, i) => {
+                let inner = img(c.imageUrl, 200);
+                if (c.title) inner += `<b>${esc(c.title)}</b><br>${nl2br(c.content)}<br>`;
+                if (c.productName) inner += `<b>${esc(c.productName)}</b> — 정상가 ${esc(c.priceNormal)}<br>`;
+                if (c.buttons && c.buttons.length) inner += c.buttons.map(renderButton).join('');
+                inner += renderCoupon(c.coupon);
+                return `<div style="padding:10px 0;border-bottom:1px solid #eee;"><div style="font-weight:600;margin-bottom:4px;">카드 ${i + 1}</div>${inner}</div>`;
+            }).join('');
+            html += row('캐러셀 카드', cardsHtml);
+        }
+
+        if (data.more) {
+            const links = ['pc', 'mobile', 'ios', 'android'].filter(k => data.more[k]).map(k => `${k}: ${esc(data.more[k])}`).join(' / ');
+            html += row('더보기', links);
+        }
+
+        if (data.buttons && data.buttons.length) {
+            html += row('버튼', data.buttons.map(renderButton).join(''));
+        }
+        html += renderCoupon(data.coupon) ? row('쿠폰(공통)', renderCoupon(data.coupon)) : '';
+
+        html += row('신청 일시', esc(data.createdAt));
+
+        return `<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><title>브랜드메시지 신청 - ${esc(data.profileId)}</title>
+<style>
+body{font-family:-apple-system,'Malgun Gothic',sans-serif;background:#f4f5f7;margin:0;padding:24px;}
+.card{max-width:720px;margin:0 auto;background:#fff;border-radius:12px;padding:28px;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+h1{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #333;}
+.row{display:flex;padding:10px 0;border-bottom:1px solid #eee;}
+.label{width:140px;flex-shrink:0;font-weight:600;color:#555;font-size:13px;}
+.value{flex:1;font-size:14px;color:#222;word-break:break-word;}
+</style></head>
+<body><div class="card"><h1>카카오 브랜드메시지 템플릿 신청서</h1>${html}</div></body></html>`;
+    }
+
     document.getElementById('submitBtn').addEventListener('click', async () => {
         const invalid = validateRequiredFields();
         if (invalid) {
@@ -5100,6 +5190,26 @@
             const formData = await buildSubmissionData();
 
             submitBtn.innerText = '신청서 등록 중...';
+
+            try {
+                const snapshotHtml = buildSnapshotHtml(formData);
+                const now = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+                const snapshotPath = `submissions/${dateStr}_${sanitizeFileName(formData.profileId || 'unknown')}.html`;
+                await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: `신청 스냅샷: ${snapshotPath}`,
+                        content: btoa(unescape(encodeURIComponent(snapshotHtml))),
+                        branch: GH_BRANCH
+                    })
+                });
+            } catch (snapErr) {
+                // 스냅샷 저장 실패는 전체 제출을 막지 않는다
+                console.error('스냅샷 저장 실패:', snapErr);
+            }
 
             const url = `${WORKER_URL}/contents/${GH_DATA_FILE}`;
             const res = await fetch(url);
