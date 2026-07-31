@@ -1212,7 +1212,7 @@
                             &nbsp;&nbsp;1) 정상가격, 할인 후 가격, 할인율, 정액할인가격 전부 고정변수명 사용<br>
                             &nbsp;&nbsp;2) 정상가격(숫자)<br>
                             &nbsp;&nbsp;3) 정상가격(숫자), 할인 후 가격(숫자), 할인율(숫자) 혹은 정상가격(숫자), 할인 후 가격(숫자), 정액할인가격(숫자)<br>
-                            - 가격, 할인율 등의 오입력으로 인한 책임은 다우기술에서 지지 않습니다. 입력 시 유의하시기 바랍니다.
+                            - 가격, 할인율 등의 오입력으로 인한 책임은 kct에서 지지 않습니다. 입력 시 유의하시기 바랍니다.
                         </div>
                     </div>
 
@@ -1682,7 +1682,7 @@
                                         &nbsp;&nbsp;1) 정상가격, 할인 후 가격, 할인율, 정액할인가격 전부 고정변수명 사용<br>
                                         &nbsp;&nbsp;2) 정상가격(숫자)<br>
                                         &nbsp;&nbsp;3) 정상가격(숫자), 할인 후 가격(숫자), 할인율(숫자) 혹은 정상가격(숫자), 할인 후 가격(숫자), 정액할인가격(숫자)<br>
-                                        - 가격, 할인율 등의 오입력으로 인한 책임은 다우기술에서 지지 않습니다. 입력 시 유의하시기 바랍니다.
+                                        - 가격, 할인율 등의 오입력으로 인한 책임은 kct에서 지지 않습니다. 입력 시 유의하시기 바랍니다.
                                     </div>
                                 </div>
 
@@ -5005,17 +5005,24 @@
         } else if (type === 'image' || type === 'wide_image') {
             data.message = messageInput.value;
             const file = imageFileInput.files[0];
+            data.imageFileName = file ? file.name : '';
             data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+            data.imageLink = document.getElementById('image-link-input') ? document.getElementById('image-link-input').value.trim() : '';
         } else if (type === 'video') {
             data.message = messageInput.value;
             const vFile = videoFileInput.files[0];
             const tFile = videoThumbFileInput.files[0];
+            data.videoFileName = vFile ? vFile.name : '';
+            data.videoThumbFileName = tFile ? tFile.name : '';
             data.videoUrl = vFile ? await uploadDataUrlToGithub(await fileToDataUrl(vFile), vFile.name, 'videos') : '';
             data.videoThumbUrl = tFile ? await uploadDataUrlToGithub(await fileToDataUrl(tFile), tFile.name, 'images') : '';
         } else if (type === 'commerce') {
             const file = imageFileInput.files[0];
+            data.imageFileName = file ? file.name : '';
             data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+            data.imageLink = document.getElementById('image-link-input') ? document.getElementById('image-link-input').value.trim() : '';
             data.productName = commerceProductNameInput.value.trim();
+            data.fixedVar = commerceFixedVarCheckbox.checked;
             data.priceNormal = commercePriceNormal.value.trim();
             data.priceDiscounted = commercePriceDiscounted.value.trim();
             data.priceRate = commercePriceRate.value.trim();
@@ -5024,6 +5031,7 @@
         } else if (type === 'list') {
             data.listTitle = listTitleInput.value.trim();
             data.main = {
+                imageFileName: listMainData.imageFileName,
                 imageUrl: await uploadDataUrlToGithub(listMainData.imageDataUrl, 'list_main', 'images'),
                 title: listMainData.title,
                 linkPc: listMainData.linkPc,
@@ -5035,6 +5043,7 @@
             for (let i = 0; i < listSubItems.length; i++) {
                 const it = listSubItems[i];
                 data.subItems.push({
+                    imageFileName: it.imageFileName,
                     imageUrl: await uploadDataUrlToGithub(it.imageDataUrl, `list_sub_${i + 1}`, 'images'),
                     title: it.title,
                     linkPc: it.linkPc,
@@ -5048,7 +5057,9 @@
             for (let i = 0; i < carouselCards.length; i++) {
                 const c = carouselCards[i];
                 data.cards.push({
+                    imageFileName: c.imageFileName,
                     imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `carousel_${i + 1}`, 'images'),
+                    imageLink: c.imageLink,
                     title: c.title,
                     content: c.content,
                     buttons: c.buttons,
@@ -5061,17 +5072,29 @@
             } : null;
         } else if (type === 'carousel_commerce') {
             data.intro = ccIntroEnabled ? {
+                imageFileName: ccIntroData.imageFileName,
                 imageUrl: await uploadDataUrlToGithub(ccIntroData.imageDataUrl, 'cc_intro', 'images'),
                 title: ccIntroData.title,
-                content: ccIntroData.content
+                content: ccIntroData.content,
+                linkPc: ccIntroData.linkPc,
+                linkMobile: ccIntroData.linkMobile,
+                linkIos: ccIntroData.linkIos,
+                linkAndroid: ccIntroData.linkAndroid
             } : null;
             data.cards = [];
             for (let i = 0; i < ccCards.length; i++) {
                 const c = ccCards[i];
                 data.cards.push({
+                    imageFileName: c.imageFileName,
                     imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `cc_card_${i + 1}`, 'images'),
+                    imageLink: c.imageLink,
                     productName: c.productName,
+                    fixedVar: c.fixedVar,
                     priceNormal: c.priceNormal,
+                    priceDiscounted: c.priceDiscounted,
+                    priceRate: c.priceRate,
+                    priceFixed: c.priceFixed,
+                    extraInfo: c.extraInfo,
                     buttons: c.buttons,
                     coupon: c.couponEnabled ? c.coupon : null
                 });
@@ -5144,6 +5167,15 @@
         const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
         const row = (label, value) => value ? `<div class="row"><div class="label">${esc(label)}</div><div class="value">${value}</div></div>` : '';
 
+        const renderLinks = (obj) => {
+            if (!obj) return '';
+            return ['pc', 'mobile', 'ios', 'android']
+                .map(k => ({ key: k, val: obj[k] !== undefined ? obj[k] : obj['link' + k.charAt(0).toUpperCase() + k.slice(1)] }))
+                .filter(o => o.val)
+                .map(o => `${o.key}: ${esc(o.val)}`)
+                .join(' / ');
+        };
+
         const renderButton = (b) => {
             const links = b.links || {};
             const linkParts = ['pc', 'mobile', 'android', 'ios'].filter(k => links[k]).map(k => `${k}: ${esc(links[k])}`).join(' / ');
@@ -5155,47 +5187,65 @@
             return `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #ddd;"><b>쿠폰</b> [${esc(c.type)}]${c.val ? ' ' + esc(c.val) : ''} — ${esc(c.desc)}${links ? '<br>' + links : ''}</div>`;
         };
 
+        // 커머스/캐러셀커머스 공용 가격 표시 (고정변수명 사용 시 그 사실을 명시)
+        const renderPriceLine = (c) => {
+            if (c.fixedVar) return '고정변수명 사용';
+            return [
+                c.priceNormal ? `정상가 ${esc(c.priceNormal)}` : '',
+                c.priceDiscounted ? `할인가 ${esc(c.priceDiscounted)}` : '',
+                c.priceRate ? `할인율 ${esc(c.priceRate)}%` : '',
+                c.priceFixed ? `정액할인 ${esc(c.priceFixed)}` : ''
+            ].filter(Boolean).join(' / ');
+        };
+
         let html = row('담당자 이메일', esc(data.managerEmail));
         html += row('발신프로필 ID', esc(data.profileId));
         html += row('템플릿명', esc(data.templateTitle));
         html += row('템플릿 유형', esc(data.templateType));
 
         if (data.message) html += row('내용', `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${nl2br(data.message)}</pre>`);
-        if (data.imageUrl) html += `<div class="row"><div class="label">이미지</div><div class="value"></div></div>`;
-        if (data.videoUrl) html += `<div class="row"><div class="label">동영상</div><div class="value"></div></div>`;
-        if (data.videoThumbUrl) html += `<div class="row"><div class="label">동영상 썸네일</div><div class="value"></div></div>`;
+
+        if (data.imageUrl || data.imageFileName) html += row('이미지', esc(data.imageFileName) || '(파일명 없음)');
+        if (data.imageLink) html += row('이미지 링크', esc(data.imageLink));
+        if (data.videoUrl || data.videoFileName) html += row('동영상', esc(data.videoFileName) || '(파일명 없음)');
+        if (data.videoThumbUrl || data.videoThumbFileName) html += row('동영상 썸네일', esc(data.videoThumbFileName) || '(파일명 없음)');
 
         if (data.productName) {
             html += row('상품명', esc(data.productName));
-            html += row('가격', [
-                data.priceNormal ? `정상가 ${esc(data.priceNormal)}` : '',
-                data.priceDiscounted ? `할인가 ${esc(data.priceDiscounted)}` : '',
-                data.priceRate ? `할인율 ${esc(data.priceRate)}%` : '',
-                data.priceFixed ? `정액할인 ${esc(data.priceFixed)}` : ''
-            ].filter(Boolean).join(' / '));
+            html += row('가격', renderPriceLine(data));
             if (data.extraInfo) html += row('부가정보', nl2br(data.extraInfo));
         }
 
         if (data.listTitle) {
             html += row('리스트 제목', esc(data.listTitle));
             if (data.main) {
-                html += row('메인 아이템', `<b>${esc(data.main.title)}</b><br>Mobile: ${esc(data.main.linkMobile)}`);
+                const mainLinks = renderLinks(data.main);
+                html += row('메인 아이템', `이미지: ${esc(data.main.imageFileName) || '(파일명 없음)'}<br><b>${esc(data.main.title)}</b>${mainLinks ? '<br>' + mainLinks : ''}`);
             }
             if (data.subItems && data.subItems.length) {
-                const sub = data.subItems.map((it, i) => `<div style="padding:6px 0;border-bottom:1px dashed #ddd;"><b>#${i + 1} ${esc(it.title)}</b><br>Mobile: ${esc(it.linkMobile)}</div>`).join('');
+                const sub = data.subItems.map((it, i) => {
+                    const links = renderLinks(it);
+                    return `<div style="padding:6px 0;border-bottom:1px dashed #ddd;">이미지: ${esc(it.imageFileName) || '(파일명 없음)'}<br><b>#${i + 1} ${esc(it.title)}</b>${links ? '<br>' + links : ''}</div>`;
+                }).join('');
                 html += row('서브 아이템', sub);
             }
         }
 
         if (data.intro) {
-            html += row('캐러셀 인트로', `<b>${esc(data.intro.title)}</b><br>${nl2br(data.intro.content)}`);
+            const introLinks = renderLinks(data.intro);
+            html += row('캐러셀 인트로', `이미지: ${esc(data.intro.imageFileName) || '(파일명 없음)'}<br><b>${esc(data.intro.title)}</b><br>${nl2br(data.intro.content)}${introLinks ? '<br>' + introLinks : ''}`);
         }
 
         if (data.cards && data.cards.length) {
             const cardsHtml = data.cards.map((c, i) => {
-                let inner = '';
-                if (c.title) inner += `<b>${esc(c.title)}</b><br>${nl2br(c.content)}<br>`;
-                if (c.productName) inner += `<b>${esc(c.productName)}</b> — 정상가 ${esc(c.priceNormal)}<br>`;
+                let inner = `이미지: ${esc(c.imageFileName) || '(파일명 없음)'}${c.imageLink ? ' / 링크: ' + esc(c.imageLink) : ''}<br>`;
+                if (c.title !== undefined) {
+                    inner += `<b>${esc(c.title)}</b><br>${nl2br(c.content)}<br>`;
+                }
+                if (c.productName) {
+                    inner += `<b>${esc(c.productName)}</b> — ${renderPriceLine(c)}<br>`;
+                    if (c.extraInfo) inner += `부가정보: ${nl2br(c.extraInfo)}<br>`;
+                }
                 if (c.buttons && c.buttons.length) inner += c.buttons.map(renderButton).join('');
                 inner += renderCoupon(c.coupon);
                 return `<div style="padding:10px 0;border-bottom:1px solid #eee;"><div style="font-weight:600;margin-bottom:4px;">카드 ${i + 1}</div>${inner}</div>`;
@@ -5204,7 +5254,7 @@
         }
 
         if (data.more) {
-            const links = ['pc', 'mobile', 'ios', 'android'].filter(k => data.more[k]).map(k => `${k}: ${esc(data.more[k])}`).join(' / ');
+            const links = renderLinks(data.more);
             html += row('더보기', links);
         }
 
