@@ -1652,6 +1652,7 @@
             templateType: selectedType,
             itemListItems: selectedType === '아이템리스트형' ? selectedItemList : [],
             imageUrl: isImgRequired ? finalImageUrl : '',
+            imageFileName: (isImgRequired && uploadedImgFile) ? uploadedImgFile.name : '',
             headerText: isHeaderRequired ? headerTextVal : '',
             itemHighlight: isItemHlRequired ? {
                 title: itemHlTitleVal,
@@ -1697,7 +1698,7 @@
             html += row('카테고리', `${esc(data.category.main)} &gt; ${esc(data.category.sub)}`);
             html += row('템플릿 유형', esc(data.templateType));
             if (data.itemListItems.length) html += row('리스트형 입력항목', esc(data.itemListItems.join(', ')));
-            if (data.imageUrl) html += `<div class="row"><div class="label">이미지</div><div class="value"></div></div>`;
+            if (data.imageUrl) html += `<div class="row"><div class="label">이미지</div><div class="value">${data.imageFileName ? data.imageFileName.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])) : '(파일명 없음)'}</div></div>`;
             if (data.headerText) html += row('헤더 문구', nl2br(data.headerText));
             if (data.itemHighlight) {
                 html += row('아이템 하이라이트', `${nl2br(data.itemHighlight.title)}<br>${nl2br(data.itemHighlight.description)}`);
