@@ -227,11 +227,13 @@
             </div>
 
             <!-- 템플릿 명 -->
-            <div class="form-row">
-                <div class="label-col">템플릿 명 <span class="req">*</span></div>
-                <div class="input-col">
-                    <input type="text" id="templateName" maxlength="200" placeholder="관리용으로 템플릿 내용에 포함되지 않습니다">
-                    <span class="char-limit"><span id="nameLen">0</span>/200자</span>
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="label-col" style="padding-top: 10px;">템플릿 명 <span class="req">*</span></div>
+                <div class="input-col" style="flex-direction: column; align-items: flex-start;">
+                    <input type="text" id="templateName" maxlength="200" placeholder="관리용으로 템플릿 내용에 포함되지 않습니다" style="width: 100%;">
+                    <div style="display: flex; justify-content: flex-end; width: 100%; margin-top: 6px;">
+                        <span class="char-limit"><span id="nameLen">0</span>/200자</span>
+                    </div>
                 </div>
             </div>
 
@@ -239,7 +241,7 @@
             <div class="form-row">
                 <div class="label-col">템플릿 카테고리 <span class="req">*</span></div>
                 <div class="input-col">
-                    <select id="catMain" style="width: 48%;" onchange="updateSubCategories()">
+                    <select id="catMain" style="width: calc(50% - 5px);" onchange="updateSubCategories()">
                         <option value="">대분류</option>
                         <option value="구매">구매</option>
                         <option value="기타">기타</option>
@@ -252,7 +254,7 @@
                         <option value="쿠폰/포인트">쿠폰/포인트</option>
                         <option value="회원">회원</option>
                     </select>
-                    <select id="catSub" style="width: 48%;">
+                    <select id="catSub" style="width: calc(50% - 5px);">
                         <option value="">소분류 선택</option>
                     </select>
                 </div>
