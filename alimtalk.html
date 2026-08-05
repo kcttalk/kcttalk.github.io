@@ -1771,6 +1771,7 @@
         try {
             const snapshotHtml = buildFullSnapshot(formData);
             const snapshotPath = await getUniquePath(`submissions/${dateStamp()}_${sanitizeFileName(formData.senderId || 'unknown')}.html`);
+            formData.snapshotPath = snapshotPath;
             await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
