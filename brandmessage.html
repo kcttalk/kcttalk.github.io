@@ -5338,7 +5338,7 @@
             });
 
             if (!putRes.ok) throw new Error();
-            showAlertModal('🎉 템플릿 신청이 완료되었습니다!', () => location.reload());
+            showAlertModal('✅ 템플릿 신청이 완료되었습니다.', () => location.reload());
         } catch (err) {
             submitBtn.disabled = false;
             submitBtn.innerText = originalBtnText;

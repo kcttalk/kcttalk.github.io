@@ -1816,7 +1816,7 @@
             });
 
             if (putRes.ok) {
-                showAlertModal("🎉 템플릿 신청이 완료되었습니다!", () => location.reload());
+                showAlertModal("✅ 템플릿 신청이 완료되었습니다.", () => location.reload());
             } else {
                 const errBody = await putRes.json().catch(() => ({}));
                 throw new Error(`데이터 저장 실패 (${putRes.status}: ${errBody.message || '알 수 없는 오류'})`);
