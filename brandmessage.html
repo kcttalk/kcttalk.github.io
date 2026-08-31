@@ -5376,26 +5376,38 @@ textarea:focus {
             }
 
             const url = `${WORKER_URL}/contents/${GH_DATA_FILE}`;
-            const res = await fetch(url);
-            let currentData = [];
-            let sha;
-            if (res.ok) {
-                const fileData = await res.json();
-                currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
-                sha = fileData.sha;
-            }
-            currentData.push(formData);
+            // 동시 제출 시 GitHub Contents API가 sha 불일치(409 Conflict)로 실패할 수 있어,
+            // 그 경우에만 최신 데이터를 다시 읽어와 재시도한다 (그 외 로직/동작은 기존과 동일).
+            const maxRetries = 5;
+            let putRes;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                const res = await fetch(url);
+                let currentData = [];
+                let sha;
+                if (res.ok) {
+                    const fileData = await res.json();
+                    currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+                    sha = fileData.sha;
+                }
+                currentData.push(formData);
 
-            const putRes = await fetch(url, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: `브랜드메시지 템플릿 신청: ${formData.profileId}`,
-                    content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
-                    sha: sha,
-                    branch: GH_BRANCH
-                })
-            });
+                putRes = await fetch(url, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message: `브랜드메시지 템플릿 신청: ${formData.profileId}`,
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
+                        sha: sha,
+                        branch: GH_BRANCH
+                    })
+                });
+
+                if (putRes.status === 409 && attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+                    continue;
+                }
+                break;
+            }
 
             if (!putRes.ok) throw new Error();
             hideLoadingModal();
