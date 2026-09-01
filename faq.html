@@ -156,10 +156,13 @@
       border-radius: 22px;
       box-shadow: 0 14px 34px rgba(15,23,42,0.06);
       overflow: hidden;
-      transition: box-shadow .2s ease;
       contain: content;
     }
 
+    /* height 변화와 동시에 무거운 blur box-shadow까지 같이
+       트랜지션되면 매 프레임 다시 그려야 할 게 두 배가 된다.
+       스마트폰 미리보기의 chat-bubble처럼 그림자는 고정해두고
+       height 하나만 움직이게 한다(열릴 때는 순간 전환). */
     .faq-item.open {
       box-shadow: 0 20px 44px rgba(15,23,42,0.09);
     }
