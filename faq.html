@@ -160,14 +160,6 @@
       contain: content;
     }
 
-    /* 아코디언이 움직이는 동안에는 box-shadow 전환을 끈다.
-       height 애니메이션과 동시에 box-shadow 페인트까지 겹치면
-       버벅임이 커지므로, 움직이는 동안은 순간적으로 값만
-       바뀌게 하고 트랜지션 자체는 재생하지 않는다. */
-    .faq-list.is-animating .faq-item {
-      transition: none;
-    }
-
     .faq-item.open {
       box-shadow: 0 20px 44px rgba(15,23,42,0.09);
     }
@@ -220,15 +212,13 @@
       stroke: #1479ff;
     }
 
-    /* grid-template-rows: 0fr → 1fr 트릭 대신 실제 px 높이를
-       JS로 측정해 height를 직접 애니메이션한다. grid 트랙 크기는
-       매 프레임 콘텐츠를 다시 측정(intrinsic sizing)해야 해서
-       무거운데, height는 고정된 두 값 사이를 보간하기만 하면
-       되므로 훨씬 가볍다. */
+    /* brandmessage.html의 preview-image-box(와이드이미지 토글)와
+       동일한 방식: height를 'auto'가 아니라 구체적인 px 숫자
+       사이로만, 짧고 단순한 transition 하나로 움직인다. */
     .faq-answer {
       height: 0;
       overflow: hidden;
-      transition: height .3s ease;
+      transition: height 0.2s ease;
     }
 
     .faq-answer-inner {
@@ -419,64 +409,28 @@
   </div>
 
   <script>
-    function animateItem(item, open, onComplete) {
+    // brandmessage.html의 와이드이미지 토글과 동일한 패턴:
+    // height를 'auto'가 아니라 구체적인 px 숫자 사이로만 전환한다.
+    // (0px ↔ scrollHeight px) — 'auto'를 쓰지 않으므로 트랜지션이
+    // 씹히거나 강제 리플로우를 따로 해줄 필요가 없다.
+    function setOpen(item, open) {
       const answer = item.querySelector('.faq-answer');
       item.classList.toggle('open', open);
-
-      const onEnd = (e) => {
-        if (e.target === answer && e.propertyName === 'height') {
-          answer.removeEventListener('transitionend', onEnd);
-          if (open) {
-            // 내용이 바뀌거나 창 크기가 변해도 다시 잘리지 않도록
-            // 열린 상태에서는 높이를 auto로 풀어준다.
-            answer.style.height = 'auto';
-          }
-          onComplete && onComplete();
-        }
-      };
-      answer.addEventListener('transitionend', onEnd);
-
-      if (open) {
-        const target = answer.scrollHeight;
-        answer.style.height = target + 'px';
-      } else {
-        // 현재 높이가 'auto'일 수 있으므로 먼저 px로 고정한 뒤
-        // 강제로 리플로우시키고, 그 다음 프레임에 0으로 줄여야
-        // 트랜지션이 정상적으로 재생된다.
-        const current = answer.scrollHeight;
-        answer.style.height = current + 'px';
-        // eslint-disable-next-line no-unused-expressions
-        answer.offsetHeight; // 강제 리플로우
-        requestAnimationFrame(() => {
-          answer.style.height = '0px';
-        });
-      }
+      answer.style.height = open ? answer.scrollHeight + 'px' : '0px';
     }
 
     function toggleFaq(btn) {
       const item = btn.closest('.faq-item');
-      const list = document.querySelector('.faq-list');
       const isOpen = item.classList.contains('open');
-
-      // 애니메이션이 진행되는 동안 리스트 전체의 box-shadow 전환을 끈다.
-      // (열림/닫힘으로 움직이는 모든 카드가 대상)
-      let pending = 0;
-      const done = () => {
-        pending -= 1;
-        if (pending <= 0) list.classList.remove('is-animating');
-      };
-      list.classList.add('is-animating');
 
       // 아코디언: 다른 항목은 닫고 클릭한 항목만 토글
       document.querySelectorAll('.faq-item.open').forEach(openItem => {
         if (openItem !== item) {
-          pending += 1;
-          animateItem(openItem, false, done);
+          setOpen(openItem, false);
         }
       });
 
-      pending += 1;
-      animateItem(item, !isOpen, done);
+      setOpen(item, !isOpen);
     }
   </script>
 </body>
