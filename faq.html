@@ -155,22 +155,14 @@
       border: 1px solid rgba(226,232,240,0.9);
       border-radius: 22px;
       box-shadow: 0 14px 34px rgba(15,23,42,0.06);
-      backdrop-filter: blur(14px);
       overflow: hidden;
-      transition: box-shadow .2s ease;
-      }
-
-    /* 아코디언이 움직이는 동안에는 리스트 전체의 블러와
-       box-shadow 전환을 끈다. (열리는/닫히는 카드뿐 아니라,
-       리플로우로 같이 밀려나는 다른 카드들도 backdrop-filter가
-       켜져 있으면 매 프레임 배경을 다시 블러 처리해야 하고,
-       box-shadow 전환도 동시에 페인트 비용을 더해 버벅임을
-       키우므로 애니메이션 구간에는 둘 다 정지시킨다) */
-    .faq-list.is-animating .faq-item {
-      backdrop-filter: none;
-      transition: none;
+      contain: content;
     }
 
+    /* height 변화와 동시에 무거운 blur box-shadow까지 같이
+       트랜지션되면 매 프레임 다시 그려야 할 게 두 배가 된다.
+       스마트폰 미리보기의 chat-bubble처럼 그림자는 고정해두고
+       height 하나만 움직이게 한다(열릴 때는 순간 전환). */
     .faq-item.open {
       box-shadow: 0 20px 44px rgba(15,23,42,0.09);
     }
@@ -223,16 +215,14 @@
       stroke: #1479ff;
     }
 
-    /* grid-template-rows: 0fr → 1fr 트릭 대신 실제 px 높이를
-       JS로 측정해 height를 직접 애니메이션한다. grid 트랙 크기는
-       매 프레임 콘텐츠를 다시 측정(intrinsic sizing)해야 해서
-       무거운데, height는 고정된 두 값 사이를 보간하기만 하면
-       되므로 훨씬 가볍다. */
+    /* brandmessage.html의 preview-image-box(와이드이미지 토글)와
+       동일한 방식: height를 'auto'가 아니라 구체적인 px 숫자
+       사이로만, 짧고 단순한 transition 하나로 움직인다. */
     .faq-answer {
       height: 0;
       overflow: hidden;
-      transition: height .25s ease;
-      }
+      transition: height 0.2s ease;
+    }
 
     .faq-answer-inner {
       overflow: hidden;
@@ -422,42 +412,29 @@
   </div>
 
   <script>
-    function animateItem(item, open, onComplete) {
+    // brandmessage.html의 와이드이미지 토글과 동일한 패턴:
+    // height를 'auto'가 아니라 구체적인 px 숫자 사이로만 전환한다.
+    // (0px ↔ scrollHeight px) — 'auto'를 쓰지 않으므로 트랜지션이
+    // 씹히거나 강제 리플로우를 따로 해줄 필요가 없다.
+    function setOpen(item, open) {
       const answer = item.querySelector('.faq-answer');
       item.classList.toggle('open', open);
-
-      if (open) {
-        // 열린 상태의 실제 높이만 한 번 읽고 px -> auto로 전환
-        answer.style.height = answer.scrollHeight + 'px';
-      } else {
-        // auto 상태를 현재 px 높이로 고정한 뒤 다음 프레임에 0으로 전환
-        answer.style.height = answer.scrollHeight + 'px';
-        requestAnimationFrame(() => {
-          answer.style.height = '0px';
-        });
-      }
-
-      const onEnd = (e) => {
-        if (e.target !== answer || e.propertyName !== 'height') return;
-        answer.removeEventListener('transitionend', onEnd);
-        if (open) answer.style.height = 'auto';
-        if (onComplete) onComplete();
-      };
-      answer.addEventListener('transitionend', onEnd);
+      answer.style.height = open ? answer.scrollHeight + 'px' : '0px';
     }
 
     function toggleFaq(btn) {
       const item = btn.closest('.faq-item');
       const isOpen = item.classList.contains('open');
 
-      // 다른 항목은 닫고 클릭한 항목만 토글
+      // 아코디언: 다른 항목은 닫고 클릭한 항목만 토글
       document.querySelectorAll('.faq-item.open').forEach(openItem => {
-        if (openItem !== item) animateItem(openItem, false);
+        if (openItem !== item) {
+          setOpen(openItem, false);
+        }
       });
 
-      animateItem(item, !isOpen);
+      setOpen(item, !isOpen);
     }
-
   </script>
 </body>
 </html>
