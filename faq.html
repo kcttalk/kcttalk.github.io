@@ -158,6 +158,11 @@
       backdrop-filter: blur(14px);
       overflow: hidden;
       transition: box-shadow .2s ease;
+      contain: content;
+    }
+
+    .faq-item.is-animating {
+      backdrop-filter: none;
     }
 
     .faq-item.open {
@@ -360,7 +365,7 @@
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFaq(this)">
           <span class="faq-num">Q2</span>
-          <span class="faq-question-text">템플릿 신청 결과는 어디서 확인할 수 있나요?</span>
+          <span class="faq-question-text">템플릿 신청 결과는 어떻게 확인할 수 있나요?</span>
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
@@ -410,6 +415,20 @@
   </div>
 
   <script>
+    function animateItem(item, open) {
+      const answer = item.querySelector('.faq-answer');
+      item.classList.add('is-animating');
+      item.classList.toggle('open', open);
+
+      const onEnd = (e) => {
+        if (e.target === answer && e.propertyName === 'grid-template-rows') {
+          item.classList.remove('is-animating');
+          answer.removeEventListener('transitionend', onEnd);
+        }
+      };
+      answer.addEventListener('transitionend', onEnd);
+    }
+
     function toggleFaq(btn) {
       const item = btn.closest('.faq-item');
       const isOpen = item.classList.contains('open');
@@ -417,11 +436,11 @@
       // 아코디언: 다른 항목은 닫고 클릭한 항목만 토글
       document.querySelectorAll('.faq-item.open').forEach(openItem => {
         if (openItem !== item) {
-          openItem.classList.remove('open');
+          animateItem(openItem, false);
         }
       });
 
-      item.classList.toggle('open', !isOpen);
+      animateItem(item, !isOpen);
     }
   </script>
 </body>
