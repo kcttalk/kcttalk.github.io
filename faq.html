@@ -161,12 +161,15 @@
       contain: content;
     }
 
-    /* 아코디언이 움직이는 동안에는 리스트 전체의 블러를 끈다.
-       (열리는/닫히는 카드뿐 아니라, 리플로우로 같이 밀려나는
-       다른 카드들도 backdrop-filter가 켜져 있으면 매 프레임
-       배경을 다시 블러 처리해야 해서 버벅임의 주된 원인이 됨) */
+    /* 아코디언이 움직이는 동안에는 리스트 전체의 블러와
+       box-shadow 전환을 끈다. (열리는/닫히는 카드뿐 아니라,
+       리플로우로 같이 밀려나는 다른 카드들도 backdrop-filter가
+       켜져 있으면 매 프레임 배경을 다시 블러 처리해야 하고,
+       box-shadow 전환도 동시에 페인트 비용을 더해 버벅임을
+       키우므로 애니메이션 구간에는 둘 다 정지시킨다) */
     .faq-list.is-animating .faq-item {
       backdrop-filter: none;
+      transition: none;
     }
 
     .faq-item.open {
@@ -221,14 +224,16 @@
       stroke: #1479ff;
     }
 
+    /* grid-template-rows: 0fr → 1fr 트릭 대신 실제 px 높이를
+       JS로 측정해 height를 직접 애니메이션한다. grid 트랙 크기는
+       매 프레임 콘텐츠를 다시 측정(intrinsic sizing)해야 해서
+       무거운데, height는 고정된 두 값 사이를 보간하기만 하면
+       되므로 훨씬 가볍다. */
     .faq-answer {
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows .3s ease;
-    }
-
-    .faq-item.open .faq-answer {
-      grid-template-rows: 1fr;
+      height: 0;
+      overflow: hidden;
+      transition: height .3s ease;
+      will-change: height;
     }
 
     .faq-answer-inner {
@@ -369,7 +374,7 @@
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFaq(this)">
           <span class="faq-num">Q2</span>
-          <span class="faq-question-text">템플릿 신청 결과는 어디서 확인할 수 있나요?</span>
+          <span class="faq-question-text">템플릿 신청 결과는 어떻게 확인할 수 있나요?</span>
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
@@ -424,12 +429,33 @@
       item.classList.toggle('open', open);
 
       const onEnd = (e) => {
-        if (e.target === answer && e.propertyName === 'grid-template-rows') {
+        if (e.target === answer && e.propertyName === 'height') {
           answer.removeEventListener('transitionend', onEnd);
+          if (open) {
+            // 내용이 바뀌거나 창 크기가 변해도 다시 잘리지 않도록
+            // 열린 상태에서는 높이를 auto로 풀어준다.
+            answer.style.height = 'auto';
+          }
           onComplete && onComplete();
         }
       };
       answer.addEventListener('transitionend', onEnd);
+
+      if (open) {
+        const target = answer.scrollHeight;
+        answer.style.height = target + 'px';
+      } else {
+        // 현재 높이가 'auto'일 수 있으므로 먼저 px로 고정한 뒤
+        // 강제로 리플로우시키고, 그 다음 프레임에 0으로 줄여야
+        // 트랜지션이 정상적으로 재생된다.
+        const current = answer.scrollHeight;
+        answer.style.height = current + 'px';
+        // eslint-disable-next-line no-unused-expressions
+        answer.offsetHeight; // 강제 리플로우
+        requestAnimationFrame(() => {
+          answer.style.height = '0px';
+        });
+      }
     }
 
     function toggleFaq(btn) {
