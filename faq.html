@@ -161,7 +161,11 @@
       contain: content;
     }
 
-    .faq-item.is-animating {
+    /* 아코디언이 움직이는 동안에는 리스트 전체의 블러를 끈다.
+       (열리는/닫히는 카드뿐 아니라, 리플로우로 같이 밀려나는
+       다른 카드들도 backdrop-filter가 켜져 있으면 매 프레임
+       배경을 다시 블러 처리해야 해서 버벅임의 주된 원인이 됨) */
+    .faq-list.is-animating .faq-item {
       backdrop-filter: none;
     }
 
@@ -365,7 +369,7 @@
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFaq(this)">
           <span class="faq-num">Q2</span>
-          <span class="faq-question-text">템플릿 신청 결과는 어떻게 확인할 수 있나요?</span>
+          <span class="faq-question-text">템플릿 신청 결과는 어디서 확인할 수 있나요?</span>
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
@@ -415,15 +419,14 @@
   </div>
 
   <script>
-    function animateItem(item, open) {
+    function animateItem(item, open, onComplete) {
       const answer = item.querySelector('.faq-answer');
-      item.classList.add('is-animating');
       item.classList.toggle('open', open);
 
       const onEnd = (e) => {
         if (e.target === answer && e.propertyName === 'grid-template-rows') {
-          item.classList.remove('is-animating');
           answer.removeEventListener('transitionend', onEnd);
+          onComplete && onComplete();
         }
       };
       answer.addEventListener('transitionend', onEnd);
@@ -431,16 +434,29 @@
 
     function toggleFaq(btn) {
       const item = btn.closest('.faq-item');
+      const list = document.querySelector('.faq-list');
       const isOpen = item.classList.contains('open');
+
+      // 애니메이션이 진행되는 동안 리스트 전체의 backdrop-filter를 끈다.
+      // (열림/닫힘으로 움직이는 모든 카드가 대상 — 토글 대상 카드만이 아니라
+      //  리플로우로 함께 움직이는 다른 카드들의 블러 리샘플링 비용까지 제거)
+      let pending = 0;
+      const done = () => {
+        pending -= 1;
+        if (pending <= 0) list.classList.remove('is-animating');
+      };
+      list.classList.add('is-animating');
 
       // 아코디언: 다른 항목은 닫고 클릭한 항목만 토글
       document.querySelectorAll('.faq-item.open').forEach(openItem => {
         if (openItem !== item) {
-          animateItem(openItem, false);
+          pending += 1;
+          animateItem(openItem, false, done);
         }
       });
 
-      animateItem(item, !isOpen);
+      pending += 1;
+      animateItem(item, !isOpen, done);
     }
   </script>
 </body>
