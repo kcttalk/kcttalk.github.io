@@ -16,6 +16,14 @@
       box-sizing: border-box;
     }
 
+    html {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top right, #eaf4ff 0%, transparent 32%),
+        radial-gradient(circle at bottom left, #eef7ff 0%, transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    }
+
     body {
       font-family: "Pretendard", sans-serif;
       min-height: 100vh;
@@ -44,7 +52,7 @@
       content: "";
       position: absolute;
       right: -160px;
-      bottom: -120px;
+      bottom: 0px;
       width: 420px;
       height: 420px;
       background: radial-gradient(circle, rgba(0,176,240,0.10) 0%, rgba(0,176,240,0.02) 45%, transparent 70%);

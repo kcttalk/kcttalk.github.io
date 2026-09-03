@@ -16,6 +16,14 @@
       box-sizing: border-box;
     }
 
+    html {
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top right, #eaf4ff 0%, transparent 32%),
+        radial-gradient(circle at bottom left, #eef7ff 0%, transparent 30%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+    }
+
     body {
       font-family: "Pretendard", sans-serif;
       min-height: 100vh;
@@ -43,7 +51,7 @@
       content: "";
       position: absolute;
       right: -160px;
-      bottom: -120px;
+      bottom: 0px;
       width: 420px;
       height: 420px;
       background: radial-gradient(circle, rgba(0,176,240,0.10) 0%, rgba(0,176,240,0.02) 45%, transparent 70%);
@@ -367,7 +375,7 @@
       <div class="faq-item">
         <button class="faq-question" onclick="toggleFaq(this)">
           <span class="faq-num">Q2</span>
-          <span class="faq-question-text">템플릿 신청 결과는 어디서 확인할 수 있나요?</span>
+          <span class="faq-question-text">템플릿 신청 결과는 어떻게 확인할 수 있나요?</span>
           <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
