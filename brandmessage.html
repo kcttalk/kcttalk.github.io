@@ -1335,7 +1335,8 @@ textarea:focus {
                             - 변수는 #{변수명} 규칙으로 입력해주세요.<br>
                             - 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>
                             - 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>
-                            - 변수는 최대 20개까지 입력 가능합니다.
+                            - 변수는 최대 20개까지 입력 가능합니다.<br>
+<span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>
                         </div>
                     </div>
                 </div>
@@ -1496,7 +1497,8 @@ textarea:focus {
                                         - 변수는 #{변수명} 규칙으로 입력해주세요.<br>
                                         - 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>
                                         - 동일한 변수값을 사용할 경우 변수명 중복 입력 가능합니다.<br>
-                                        - 변수는 최대 20개까지 입력 가능합니다.
+                                        - 변수는 최대 20개까지 입력 가능합니다.<br>
+<span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>
                                     </div>
                                 </div>
                             </div>
@@ -1635,7 +1637,8 @@ textarea:focus {
                                             - 줄바꿈은 2회만 가능합니다.<br>
                                             - 변수는 #{변수명} 규칙으로 입력해주세요.<br>
                                             - 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>
-                                            - 변수는 캐러셀 인트로 영역 내에서 최대 20개 입력할 수 있습니다.
+                                            - 변수는 캐러셀 인트로 영역 내에서 최대 20개 입력할 수 있습니다.<br>
+<span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>
                                         </div>
                                     </div>
 
@@ -2129,7 +2132,7 @@ textarea:focus {
             if(previewImageText) previewImageText.textContent = '이미지를 등록해주세요.';
             
             imageGuideText.innerHTML = `- 권장 사이즈: 800px*400px (가로500px 이상, 가로:세로 비율 2:1 이상 3:4 이하)<br>- 파일형식 및 크기 : jpg, png / 최대 5MB`;
-            contentGuideText.innerHTML = `- 줄바꿈은 99회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.`;
+            contentGuideText.innerHTML = `- 줄바꿈은 99회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.<br><span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>`;
 
             messageInput.setAttribute('maxlength', '1300');
             messageInput.setAttribute('placeholder', '1300자 이내');
@@ -2159,7 +2162,7 @@ textarea:focus {
             if(previewImageText) previewImageText.textContent = '이미지를 등록해주세요.';
 
             imageGuideText.innerHTML = `- 권장 사이즈: 800px*600px (가로500px 이상, 가로:세로 비율 2:1 이상 1:1 이하)<br>- 파일형식 및 크기 : jpg, png / 최대 5MB`;
-            contentGuideText.innerHTML = `- 줄바꿈은 5회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.`;
+            contentGuideText.innerHTML = `- 줄바꿈은 5회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.<br><span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>`;
 
             messageInput.setAttribute('maxlength', '76');
             messageInput.setAttribute('placeholder', '76자 이내');
@@ -2187,7 +2190,7 @@ textarea:focus {
             previewImageBox.classList.add('wide');
             videoPlayOverlay.style.display = 'flex';
 
-            contentGuideText.innerHTML = `- 줄바꿈은 5회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.`;
+            contentGuideText.innerHTML = `- 줄바꿈은 5회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.<br><span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>`;
 
             messageInput.setAttribute('maxlength', '76');
             messageInput.setAttribute('placeholder', '76자 이내');
@@ -2327,7 +2330,7 @@ textarea:focus {
             previewImageBox.style.display = 'none';
             videoPlayOverlay.style.display = 'none';
             
-            contentGuideText.innerHTML = `- 줄바꿈은 99회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.`;
+            contentGuideText.innerHTML = `- 줄바꿈은 99회만 가능합니다.<br>- 변수는 #{변수명} 규칙으로 입력해주세요.<br>- 변수명은 최대 20자 이내, 한글, 영어, 숫자, -, _ 만 입력 가능합니다.<br>- 동일한 변수값을 사용할 경우 변수명 중복 가능합니다.<br>- 변수는 최대 20개까지 입력 가능합니다.<br><span style="color:#e53e3e;"> - 채널 친구에게 발송하는 메시지에는 변수 사용이 불가합니다.</span>`;
 
             messageInput.setAttribute('maxlength', '1300');
             messageInput.setAttribute('placeholder', '1300자 이내');
