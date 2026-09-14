@@ -1756,6 +1756,7 @@
             let html = `<div class="row"><div class="label">담당자 이메일</div><div class="value">${esc(data.managerEmail)}</div></div>`;
             html += row('발신프로필 ID', esc(data.senderId));
             html += row('템플릿명', esc(data.templateName));
+            html += row('템플릿 코드', data.templateCodeType === 'manual' ? esc(data.templateCode) : '자동 생성');
             html += row('카테고리', `${esc(data.category.main)} &gt; ${esc(data.category.sub)}`);
             html += row('템플릿 유형', esc(data.templateType));
             if (data.itemListItems.length) html += row('리스트형 입력항목', esc(data.itemListItems.join(', ')));
@@ -1775,7 +1776,16 @@
             if (data.previewMessage) html += row('미리보기 메시지', nl2br(data.previewMessage));
             if (data.mainLinks) html += row('바로연결 링크', `PC: ${esc(data.mainLinks.pc)}<br>Mobile: ${esc(data.mainLinks.mobile)}<br>Android: ${esc(data.mainLinks.android)}<br>iOS: ${esc(data.mainLinks.ios)}`);
             if (data.buttons && data.buttons.length) {
-                html += row('버튼', data.buttons.map(b => `<div style="padding:4px 0;">[${esc(b.type)}] ${esc(b.name)} ${b.link ? '- ' + esc(b.link) : ''}</div>`).join(''));
+                html += row('버튼', data.buttons.map(b => {
+                    const linkParts = [
+                        b.urlMobile ? `Mobile: ${esc(b.urlMobile)}` : '',
+                        b.urlPc ? `PC: ${esc(b.urlPc)}` : '',
+                        b.urlAndroid ? `Android: ${esc(b.urlAndroid)}` : '',
+                        b.urlIos ? `iOS: ${esc(b.urlIos)}` : '',
+                        b.extraVal ? `추가값: ${esc(b.extraVal)}` : ''
+                    ].filter(Boolean).join(' / ');
+                    return `<div style="padding:4px 0;">[${esc(b.type)}] ${esc(b.name)}${linkParts ? '<br>' + linkParts : ''}</div>`;
+                }).join(''));
             }
             html += row('신청 일시', esc(data.createdAt));
 
