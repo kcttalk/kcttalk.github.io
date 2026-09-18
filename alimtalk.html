@@ -220,7 +220,7 @@
         <path d="M19 12H5"/>
         <path d="M12 19l-7-7 7-7"/>
     </svg>
-    홈으로 돌아가기
+    메인으로 돌아가기
 </a>
 
 <div class="wrapper">
@@ -660,10 +660,7 @@
 </div>
 
 <script>
-    const GH_USERNAME = "kcttalk";
-    const GH_REPO = "kcttalk-submission";
-    const GH_BRANCH = "main"; // 저장소의 기본 브랜치명이 다르면 이 값을 수정하세요 (예: master)
-    const WORKER_URL = "https://kct-submit-proxy.hbyaang.workers.dev"; // Cloudflare Worker 프록시 주소 (토큰은 여기 뒤에 안전하게 보관됨)
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAIt-yXGEihJ255bj6saRYvZwN_rE5X2asrUjytx997kiO-vNNveT0C_wEZ9E7bvGd/exec"; // Google Apps Script 웹 앱 배포 URL로 교체하세요
 
     let buttons = [];
     let uploadedBase64Img = "";
@@ -1538,41 +1535,43 @@
         return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
     }
 
-    // 이미 존재하는 경로면 "이름(1).png", "이름(2).png" 식으로 비어있는 이름을 찾아 반환
-    async function getUniquePath(basePath) {
-        const dotIndex = basePath.lastIndexOf('.');
-        const stem = dotIndex > -1 ? basePath.slice(0, dotIndex) : basePath;
-        const ext = dotIndex > -1 ? basePath.slice(dotIndex) : '';
-        let candidate = basePath;
-        let counter = 1;
-        while (true) {
-            const res = await fetch(`${WORKER_URL}/contents/${candidate}`);
-            if (!res.ok) return candidate; // 404 = 비어있는 이름, 사용 가능
-            candidate = `${stem}(${counter})${ext}`;
-            counter++;
+    // 파일 여러 개를 한 번의 요청으로 묶어서 Apps Script(uploadFiles 액션)에 보내고,
+    // key별 드라이브 링크 맵을 반환 (파일마다 왕복 요청을 따로 보내던 방식보다 훨씬 빠름)
+    async function uploadFilesToDrive(files, folderName) {
+        if (!files || files.length === 0) return {};
+        const res = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "uploadFiles", files, folderName })
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!result.ok) {
+            throw new Error(result.error || '파일 업로드 실패');
         }
+        return result.urls || {};
     }
 
-    async function uploadImageToGithub(dataUrl, file) {
-        const path = await getUniquePath(`images/${dateStamp()}_${sanitizeFileName(file.name)}`);
-        const base64Content = dataUrl.split(',')[1]; // "data:image/png;base64,XXXX" 에서 데이터 부분만 추출
-        const url = `${WORKER_URL}/contents/${path}`;
+    // dataURL("data:image/png;base64,XXXX")을 배치 업로드 대상 목록에 추가
+    function queueImageUpload(filesToUpload, dataUrl, file, key) {
+        const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+        if (!match) throw new Error(`이미지 업로드 실패 (${file.name})`);
+        const filename = `${dateStamp()}_${sanitizeFileName(file.name)}`;
+        filesToUpload.push({ key, base64: match[2], mimeType: match[1], filename });
+    }
 
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: `이미지 업로드: ${path}`,
-                content: base64Content,
-                branch: GH_BRANCH
-            })
-        });
-
-        if (!res.ok) {
-            throw new Error(`이미지 업로드 실패 (${file.name})`);
+    // 제출 데이터 객체를 재귀적으로 훑어서 드라이브 파일 URL을 전부 모은다 (첨부파일 컬럼용)
+    function collectDriveUrls(obj, results) {
+        results = results || [];
+        if (!obj || typeof obj !== 'object') return results;
+        for (const key in obj) {
+            const val = obj[key];
+            if (typeof val === 'string' && val.indexOf('https://drive.google.com/') === 0) {
+                results.push(val);
+            } else if (val && typeof val === 'object') {
+                collectDriveUrls(val, results);
+            }
         }
-
-        return `https://raw.githubusercontent.com/${GH_USERNAME}/${GH_REPO}/${GH_BRANCH}/${path}`;
+        return results;
     }
 
     document.getElementById('templateForm').addEventListener('submit', async (e) => {
@@ -1662,10 +1661,6 @@
             }
         }
 
-        // GitHub 토큰 미연결은 사용자가 채워야 할 폼 입력란이 아니라 개발/배포 설정값이므로
-        // 기존과 동일하게 공용 알림창(showAlertModal)으로 안내한다.
-        // (토큰은 이제 Cloudflare Worker 뒤에 안전하게 보관되어 있어 클라이언트에서 확인할 필요가 없습니다)
-
         const selectedItemList = Array.from(document.querySelectorAll('input[name="itemListItem"]:checked')).map(cb => cb.value);
 
         const submitBtn = document.getElementById('submitBtn');
@@ -1673,21 +1668,27 @@
         submitBtn.disabled = true;
         showLoadingModal('등록 중...');
 
+        // 이미지 업로드(uploadFiles)와 스냅샷 저장(submitWithSnapshot)이 같은 폴더를
+        // 가리키도록, 이번 신청 1건에서 공통으로 쓸 이름(폴더명 = 스냅샷 파일명)을 미리 정해둔다.
+        const submissionStem = `${dateStamp()}_${sanitizeFileName(document.getElementById('senderId').value.trim() || 'unknown')}`;
+
         let finalImageUrl = '';
         let finalThumbUrl = '';
 
         try {
-            // 1. 이미지를 images/ 폴더에 별도 파일로 커밋
+            const filesToUpload = [];
             if (isImgRequired && uploadedImgFile) {
-                submitBtn.innerText = '이미지 업로드 중...';
-                document.getElementById('loadingModalMsg').innerText = '이미지 업로드 중...';
-                finalImageUrl = await uploadImageToGithub(uploadedBase64Img, uploadedImgFile);
+                queueImageUpload(filesToUpload, uploadedBase64Img, uploadedImgFile, 'image');
             }
-            // 2. 아이템 하이라이트 썸네일도 별도 파일로 커밋 (선택 항목)
             if (isItemHlRequired && uploadedThumbFile) {
-                submitBtn.innerText = '썸네일 업로드 중...';
-                document.getElementById('loadingModalMsg').innerText = '썸네일 업로드 중...';
-                finalThumbUrl = await uploadImageToGithub(uploadedThumbImg, uploadedThumbFile);
+                queueImageUpload(filesToUpload, uploadedThumbImg, uploadedThumbFile, 'thumb');
+            }
+            if (filesToUpload.length > 0) {
+                submitBtn.innerText = '파일 업로드 중...';
+                document.getElementById('loadingModalMsg').innerText = '파일 업로드 중...';
+                const urls = await uploadFilesToDrive(filesToUpload, submissionStem);
+                finalImageUrl = urls.image || '';
+                finalThumbUrl = urls.thumb || '';
             }
         } catch (err) {
             submitBtn.disabled = false;
@@ -1843,69 +1844,33 @@
 
         try {
             const snapshotHtml = buildFullSnapshot(formData);
-            const snapshotPath = await getUniquePath(`submissions/${dateStamp()}_${sanitizeFileName(formData.senderId || 'unknown')}.html`);
-            formData.snapshotPath = snapshotPath;
-            await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
+            const snapshotFilename = `${submissionStem}.html`;
+            const snapshotBase64 = btoa(unescape(encodeURIComponent(snapshotHtml)));
+            const attachmentUrls = collectDriveUrls(formData);
+
+            const res = await fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({
-                    message: `신청 스냅샷: ${snapshotPath}`,
-                    content: btoa(unescape(encodeURIComponent(snapshotHtml))),
-                    branch: GH_BRANCH
+                    action: "submitWithSnapshot",
+                    category: "알림톡",
+                    managerEmail: formData.managerEmail,
+                    senderId: formData.senderId,
+                    templateType: formData.templateType,
+                    templateName: formData.templateName,
+                    templateCode: formData.templateCodeType === 'manual' ? formData.templateCode : '',
+                    snapshot: { base64: snapshotBase64, mimeType: "text/html", filename: snapshotFilename },
+                    attachmentUrls: attachmentUrls,
+                    folderName: submissionStem
                 })
             });
-        } catch (snapErr) {
-            // 스냅샷 저장 실패는 전체 제출을 막지 않는다 (data.json에는 이미 기록됨)
-            console.error('스냅샷 저장 실패:', snapErr);
-        }
+            const result = await res.json().catch(() => ({}));
 
-        try {
-            const url = `${WORKER_URL}/contents/data.json`;
-            // 동시 제출 시 GitHub Contents API가 sha 불일치(409 Conflict)로 실패할 수 있어,
-            // 그 경우에만 최신 데이터를 다시 읽어와 재시도한다 (그 외 로직/동작은 기존과 동일).
-            const maxRetries = 5;
-            let putRes;
-            for (let attempt = 0; attempt <= maxRetries; attempt++) {
-                const res = await fetch(url);
-
-                let currentData = [];
-                let sha;
-                if (res.ok) {
-                    const fileData = await res.json();
-                    currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
-                    sha = fileData.sha;
-                } else if (res.status !== 404) {
-                    // data.json이 아예 없는 404는 정상 처리(새로 생성)하지만, 그 외 오류(권한/저장소명 등)는 바로 알려준다.
-                    const errBody = await res.json().catch(() => ({}));
-                    throw new Error(`data.json 조회 실패 (${res.status}: ${errBody.message || '알 수 없는 오류'})`);
-                }
-
-                currentData.push(formData);
-
-                putRes = await fetch(url, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: `Template submitted by ${formData.senderId}`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
-                        sha: sha,
-                        branch: GH_BRANCH
-                    })
-                });
-
-                if (putRes.status === 409 && attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
-                    continue;
-                }
-                break;
-            }
-
-            if (putRes.ok) {
+            if (result.ok) {
                 hideLoadingModal();
                 showAlertModal("✅ 템플릿 신청이 완료되었습니다.", () => location.reload());
             } else {
-                const errBody = await putRes.json().catch(() => ({}));
-                throw new Error(`데이터 저장 실패 (${putRes.status}: ${errBody.message || '알 수 없는 오류'})`);
+                throw new Error(result.error || '알 수 없는 오류');
             }
         } catch (err) {
             submitBtn.disabled = false;

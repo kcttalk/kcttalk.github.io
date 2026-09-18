@@ -1116,7 +1116,7 @@ textarea:focus {
         <path d="M19 12H5"/>
         <path d="M12 19l-7-7 7-7"/>
     </svg>
-    홈으로 돌아가기
+    메인으로 돌아가기
 </a>
 
 <!-- 모달 팝업: 제출 중 로딩 안내 -->
@@ -2028,11 +2028,12 @@ textarea:focus {
 
 <script>
     // ===================== GitHub 제출 설정 =====================
-    const GH_USERNAME = "kcttalk";
-    const GH_REPO = "kcttalk-submission";
-    const GH_BRANCH = "main";
-    const WORKER_URL = "https://kct-submit-proxy.hbyaang.workers.dev"; // Cloudflare Worker 프록시 주소 (토큰은 여기 뒤에 안전하게 보관됨)
-    const GH_DATA_FILE = "brand_data.json"; // 알림톡(data.json)과 겹치지 않도록 별도 파일 사용
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxAIt-yXGEihJ255bj6saRYvZwN_rE5X2asrUjytx997kiO-vNNveT0C_wEZ9E7bvGd/exec"; // Google Apps Script 웹 앱 배포 URL로 교체하세요
+    // 브랜드메시지 템플릿 유형 코드를 시트에 표시할 한글 라벨로 변환
+    const BRAND_TYPE_LABELS = {
+        text: '텍스트', image: '이미지', wide_image: '와이드이미지', video: '동영상',
+        commerce: '커머스', list: '리스트', carousel: '캐러셀', carousel_commerce: '캐러셀커머스'
+    };
 
     // 템플릿 변경 관리 변수 (초기값: text)
     let currentTemplate = 'text';
@@ -4986,44 +4987,35 @@ textarea:focus {
         });
     }
 
-    // 이미 존재하는 경로면 "이름(1).png", "이름(2).png" 식으로 비어있는 이름을 찾아 반환
-    async function getUniquePath(basePath) {
-        const dotIndex = basePath.lastIndexOf('.');
-        const stem = dotIndex > -1 ? basePath.slice(0, dotIndex) : basePath;
-        const ext = dotIndex > -1 ? basePath.slice(dotIndex) : '';
-        let candidate = basePath;
-        let counter = 1;
-        while (true) {
-            const res = await fetch(`${WORKER_URL}/contents/${candidate}`);
-            if (!res.ok) return candidate; // 404 = 비어있는 이름, 사용 가능
-            candidate = `${stem}(${counter})${ext}`;
-            counter++;
+    // 파일 여러 개를 한 번의 요청으로 묶어서 Apps Script(uploadFiles 액션)에 보내고,
+    // key별 드라이브 링크 맵을 반환 (카드마다 왕복 요청을 따로 보내던 방식보다 훨씬 빠름)
+    async function uploadFilesToDrive(files, folderName) {
+        if (!files || files.length === 0) return {};
+        const res = await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "uploadFiles", files, folderName })
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!result.ok) {
+            throw new Error(result.error || '파일 업로드 실패');
         }
+        return result.urls || {};
     }
 
-    // dataURL("data:image/png;base64,...")을 GitHub 저장소의 지정 폴더에 별도 파일로 커밋하고 raw URL을 반환
-    async function uploadDataUrlToGithub(dataUrl, fileNameHint, folder) {
-        if (!dataUrl) return '';
-        const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
-        if (!match) return '';
-        const mime = match[1];
-        const base64Content = match[2];
-        const ext = (mime.split('/')[1] || 'bin').split('+')[0];
-        const path = await getUniquePath(`${folder}/${dateStamp()}_${sanitizeFileName(fileNameHint)}.${ext}`);
-        const url = `${WORKER_URL}/contents/${path}`;
-
-        const res = await fetch(url, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: `파일 업로드: ${path}`,
-                content: base64Content,
-                branch: GH_BRANCH
-            })
-        });
-
-        if (!res.ok) throw new Error(`파일 업로드 실패 (${fileNameHint})`);
-        return `https://raw.githubusercontent.com/${GH_USERNAME}/${GH_REPO}/${GH_BRANCH}/${path}`;
+    // 제출 데이터 객체를 재귀적으로 훑어서 드라이브 파일 URL을 전부 모은다 (첨부파일 컬럼용)
+    function collectDriveUrls(obj, results) {
+        results = results || [];
+        if (!obj || typeof obj !== 'object') return results;
+        for (const key in obj) {
+            const val = obj[key];
+            if (typeof val === 'string' && val.indexOf('https://drive.google.com/') === 0) {
+                results.push(val);
+            } else if (val && typeof val === 'object') {
+                collectDriveUrls(val, results);
+            }
+        }
+        return results;
     }
 
     // 전역 버튼 테이블 한 행을 {type, name, links} 형태로 직렬화
@@ -5046,6 +5038,21 @@ textarea:focus {
 
     // 현재 선택된 템플릿 유형에 맞춰, 이미지/동영상을 먼저 GitHub에 업로드하고
     // 그 결과 URL을 포함한 최종 제출 데이터(JSON)를 만든다.
+    // dataURL을 즉시 업로드하지 않고 pending 목록에 등록만 해두고,
+    // targetObj[targetField]에 나중에(배치 업로드 완료 후) URL이 채워지도록 예약한다.
+    function queueUpload(pending, dataUrl, fileNameHint, folder, targetObj, targetField) {
+        targetObj[targetField] = '';
+        if (!dataUrl) return;
+        const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+        if (!match) return;
+        const mime = match[1];
+        const base64Content = match[2];
+        const ext = (mime.split('/')[1] || 'bin').split('+')[0];
+        const key = `f${pending.length}`;
+        const filename = `${folder}_${dateStamp()}_${sanitizeFileName(fileNameHint)}.${ext}`;
+        pending.push({ key, base64: base64Content, mimeType: mime, filename, targetObj, targetField });
+    }
+
     async function buildSubmissionData() {
         const type = currentTemplate;
         const data = {
@@ -5056,6 +5063,11 @@ textarea:focus {
             templateType: type,
             createdAt: new Date().toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
         };
+        // 이미지 업로드(uploadFiles)와 스냅샷 저장(submitWithSnapshot)이 같은 폴더를
+        // 가리키도록, 이번 신청 1건에서 공통으로 쓸 이름(폴더명 = 스냅샷 파일명)을 미리 정해둔다.
+        data.submissionStem = `${dateStamp()}_${sanitizeFileName(data.profileId || 'unknown')}`;
+
+        const pending = []; // 이번 제출에서 업로드할 파일들을 모아뒀다가 마지막에 한 번에 보낸다
 
         if (type === 'text') {
             data.message = messageInput.value;
@@ -5063,7 +5075,8 @@ textarea:focus {
             data.message = messageInput.value;
             const file = imageFileInput.files[0];
             data.imageFileName = file ? file.name : '';
-            data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+            if (file) queueUpload(pending, await fileToDataUrl(file), file.name, 'images', data, 'imageUrl');
+            else data.imageUrl = '';
             data.imageLink = document.getElementById('image-link-input') ? document.getElementById('image-link-input').value.trim() : '';
         } else if (type === 'video') {
             data.message = messageInput.value;
@@ -5071,12 +5084,15 @@ textarea:focus {
             const tFile = videoThumbFileInput.files[0];
             data.videoFileName = vFile ? vFile.name : '';
             data.videoThumbFileName = tFile ? tFile.name : '';
-            data.videoUrl = vFile ? await uploadDataUrlToGithub(await fileToDataUrl(vFile), vFile.name, 'videos') : '';
-            data.videoThumbUrl = tFile ? await uploadDataUrlToGithub(await fileToDataUrl(tFile), tFile.name, 'images') : '';
+            if (vFile) queueUpload(pending, await fileToDataUrl(vFile), vFile.name, 'videos', data, 'videoUrl');
+            else data.videoUrl = '';
+            if (tFile) queueUpload(pending, await fileToDataUrl(tFile), tFile.name, 'images', data, 'videoThumbUrl');
+            else data.videoThumbUrl = '';
         } else if (type === 'commerce') {
             const file = imageFileInput.files[0];
             data.imageFileName = file ? file.name : '';
-            data.imageUrl = file ? await uploadDataUrlToGithub(await fileToDataUrl(file), file.name, 'images') : '';
+            if (file) queueUpload(pending, await fileToDataUrl(file), file.name, 'images', data, 'imageUrl');
+            else data.imageUrl = '';
             data.imageLink = document.getElementById('image-link-input') ? document.getElementById('image-link-input').value.trim() : '';
             data.productName = commerceProductNameInput.value.trim();
             data.fixedVar = commerceFixedVarCheckbox.checked;
@@ -5089,61 +5105,67 @@ textarea:focus {
             data.listTitle = listTitleInput.value.trim();
             data.main = {
                 imageFileName: listMainData.imageFileName,
-                imageUrl: await uploadDataUrlToGithub(listMainData.imageDataUrl, 'list_main', 'images'),
                 title: listMainData.title,
                 linkPc: listMainData.linkPc,
                 linkMobile: listMainData.linkMobile,
                 linkIos: listMainData.linkIos,
                 linkAndroid: listMainData.linkAndroid
             };
+            queueUpload(pending, listMainData.imageDataUrl, 'list_main', 'images', data.main, 'imageUrl');
+
             data.subItems = [];
             for (let i = 0; i < listSubItems.length; i++) {
                 const it = listSubItems[i];
-                data.subItems.push({
+                const subObj = {
                     imageFileName: it.imageFileName,
-                    imageUrl: await uploadDataUrlToGithub(it.imageDataUrl, `list_sub_${i + 1}`, 'images'),
                     title: it.title,
                     linkPc: it.linkPc,
                     linkMobile: it.linkMobile,
                     linkIos: it.linkIos,
                     linkAndroid: it.linkAndroid
-                });
+                };
+                data.subItems.push(subObj);
+                queueUpload(pending, it.imageDataUrl, `list_sub_${i + 1}`, 'images', subObj, 'imageUrl');
             }
         } else if (type === 'carousel') {
             data.cards = [];
             for (let i = 0; i < carouselCards.length; i++) {
                 const c = carouselCards[i];
-                data.cards.push({
+                const cardObj = {
                     imageFileName: c.imageFileName,
-                    imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `carousel_${i + 1}`, 'images'),
                     imageLink: c.imageLink,
                     title: c.title,
                     content: c.content,
                     buttons: c.buttons,
                     coupon: c.couponEnabled ? c.coupon : null
-                });
+                };
+                data.cards.push(cardObj);
+                queueUpload(pending, c.imageDataUrl, `carousel_${i + 1}`, 'images', cardObj, 'imageUrl');
             }
             data.more = carouselMoreCheckbox.checked ? {
                 pc: carouselMorePc.value, mobile: carouselMoreMobile.value,
                 ios: carouselMoreIos.value, android: carouselMoreAndroid.value
             } : null;
         } else if (type === 'carousel_commerce') {
-            data.intro = ccIntroEnabled ? {
-                imageFileName: ccIntroData.imageFileName,
-                imageUrl: await uploadDataUrlToGithub(ccIntroData.imageDataUrl, 'cc_intro', 'images'),
-                title: ccIntroData.title,
-                content: ccIntroData.content,
-                linkPc: ccIntroData.linkPc,
-                linkMobile: ccIntroData.linkMobile,
-                linkIos: ccIntroData.linkIos,
-                linkAndroid: ccIntroData.linkAndroid
-            } : null;
+            if (ccIntroEnabled) {
+                data.intro = {
+                    imageFileName: ccIntroData.imageFileName,
+                    title: ccIntroData.title,
+                    content: ccIntroData.content,
+                    linkPc: ccIntroData.linkPc,
+                    linkMobile: ccIntroData.linkMobile,
+                    linkIos: ccIntroData.linkIos,
+                    linkAndroid: ccIntroData.linkAndroid
+                };
+                queueUpload(pending, ccIntroData.imageDataUrl, 'cc_intro', 'images', data.intro, 'imageUrl');
+            } else {
+                data.intro = null;
+            }
             data.cards = [];
             for (let i = 0; i < ccCards.length; i++) {
                 const c = ccCards[i];
-                data.cards.push({
+                const cardObj = {
                     imageFileName: c.imageFileName,
-                    imageUrl: await uploadDataUrlToGithub(c.imageDataUrl, `cc_card_${i + 1}`, 'images'),
                     imageLink: c.imageLink,
                     productName: c.productName,
                     fixedVar: c.fixedVar,
@@ -5154,12 +5176,20 @@ textarea:focus {
                     extraInfo: c.extraInfo,
                     buttons: c.buttons,
                     coupon: c.couponEnabled ? c.coupon : null
-                });
+                };
+                data.cards.push(cardObj);
+                queueUpload(pending, c.imageDataUrl, `cc_card_${i + 1}`, 'images', cardObj, 'imageUrl');
             }
             data.more = carouselMoreCheckbox.checked ? {
                 pc: carouselMorePc.value, mobile: carouselMoreMobile.value,
                 ios: carouselMoreIos.value, android: carouselMoreAndroid.value
             } : null;
+        }
+
+        // 이번 제출에서 모인 파일들을 한 번의 요청으로 배치 업로드하고, 각 자리에 URL을 채워 넣는다
+        if (pending.length > 0) {
+            const urls = await uploadFilesToDrive(pending.map(p => ({ key: p.key, base64: p.base64, mimeType: p.mimeType, filename: p.filename })), data.submissionStem);
+            pending.forEach(p => { p.targetObj[p.targetField] = urls[p.key] || ''; });
         }
 
         // 전역 버튼
@@ -5346,8 +5376,6 @@ textarea:focus {
             showAlertModal(`⚠️ ${invalid.msg}`, invalid.focus || null);
             return;
         }
-        // (토큰은 이제 Cloudflare Worker 뒤에 안전하게 보관되어 있어 클라이언트에서 확인할 필요가 없습니다)
-
         const submitBtn = document.getElementById('submitBtn');
         const originalBtnText = submitBtn.innerText;
         submitBtn.disabled = true;
@@ -5360,59 +5388,35 @@ textarea:focus {
             submitBtn.innerText = '신청서 등록 중...';
             document.getElementById('loadingModalMsg').innerText = '신청서 등록 중...';
 
+            let snapshotHtml = '';
             try {
-                const snapshotHtml = buildFullSnapshot(formData);
-                const snapshotPath = await getUniquePath(`submissions/${dateStamp()}_${sanitizeFileName(formData.profileId || 'unknown')}.html`);
-                formData.snapshotPath = snapshotPath;
-                await fetch(`${WORKER_URL}/contents/${snapshotPath}`, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: `신청 스냅샷: ${snapshotPath}`,
-                        content: btoa(unescape(encodeURIComponent(snapshotHtml))),
-                        branch: GH_BRANCH
-                    })
-                });
+                snapshotHtml = buildFullSnapshot(formData);
             } catch (snapErr) {
-                // 스냅샷 저장 실패는 전체 제출을 막지 않는다
-                console.error('스냅샷 저장 실패:', snapErr);
+                console.error('스냅샷 생성 실패:', snapErr);
             }
+            const snapshotFilename = `${formData.submissionStem}.html`;
+            const snapshotBase64 = snapshotHtml ? btoa(unescape(encodeURIComponent(snapshotHtml))) : '';
 
-            const url = `${WORKER_URL}/contents/${GH_DATA_FILE}`;
-            // 동시 제출 시 GitHub Contents API가 sha 불일치(409 Conflict)로 실패할 수 있어,
-            // 그 경우에만 최신 데이터를 다시 읽어와 재시도한다 (그 외 로직/동작은 기존과 동일).
-            const maxRetries = 5;
-            let putRes;
-            for (let attempt = 0; attempt <= maxRetries; attempt++) {
-                const res = await fetch(url);
-                let currentData = [];
-                let sha;
-                if (res.ok) {
-                    const fileData = await res.json();
-                    currentData = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
-                    sha = fileData.sha;
-                }
-                currentData.push(formData);
+            const attachmentUrls = collectDriveUrls(formData);
+            const res = await fetch(APPS_SCRIPT_URL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify({
+                    action: "submitWithSnapshot",
+                    category: "브랜드메시지",
+                    managerEmail: formData.managerEmail,
+                    senderId: formData.profileId,
+                    templateType: BRAND_TYPE_LABELS[formData.templateType] || formData.templateType,
+                    templateName: formData.templateTitle,
+                    templateCode: '',
+                    snapshot: snapshotBase64 ? { base64: snapshotBase64, mimeType: "text/html", filename: snapshotFilename } : null,
+                    attachmentUrls: attachmentUrls,
+                    folderName: formData.submissionStem
+                })
+            });
+            const result = await res.json().catch(() => ({}));
 
-                putRes = await fetch(url, {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        message: `브랜드메시지 템플릿 신청: ${formData.profileId}`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
-                        sha: sha,
-                        branch: GH_BRANCH
-                    })
-                });
-
-                if (putRes.status === 409 && attempt < maxRetries) {
-                    await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
-                    continue;
-                }
-                break;
-            }
-
-            if (!putRes.ok) throw new Error();
+            if (!result.ok) throw new Error(result.error || '알 수 없는 오류');
             hideLoadingModal();
             showAlertModal('✅ 템플릿 신청이 완료되었습니다.', () => location.reload());
         } catch (err) {
