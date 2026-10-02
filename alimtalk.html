@@ -208,8 +208,70 @@
         .alert-btns { display: flex; justify-content: flex-end; margin-top: 25px; }
         .alert-btn-ok { background: #0f52ba; color: #fff; border: 1px solid #0b45a0; padding: 6px 24px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; }
         .alert-btn-ok:hover { background: #0b439c; }
+
+        /* 등록중 로딩 팝업(.loading-card)을 제외한 나머지 안내 팝업의 폰트를 조금 더 굵게 + 순검정 대신 아주 살짝 회색빛 (brandmessage와 동일) */
+        .alert-box:not(.loading-card) { font-weight: 500; color: #333; }
+
         @keyframes kct-spin { to { transform: rotate(360deg); } }
- 
+        @keyframes kct-card-pop {
+            from { opacity: 0; transform: translateY(8px) scale(.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes kct-pop-in {
+            from { transform: scale(0.4); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+        .loading-card {
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+            position: relative;
+            overflow: hidden;
+            animation: kct-card-pop .3s ease;
+        }
+        .loading-top-bar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: #eee;
+            overflow: hidden;
+        }
+        .loading-top-bar::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: var(--progress, 30%);
+            background: #0f52ba;
+            transition: width .5s ease;
+        }
+        .loading-subtitle { font-size: 13px; color: #999; margin: 0 0 20px; }
+        .loading-step-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            position: relative;
+            padding-bottom: 18px;
+        }
+        .loading-step-row:last-child { padding-bottom: 0; }
+        .loading-step-row:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 26px;
+            bottom: -2px;
+            width: 2px;
+            background: #eee;
+        }
+        .loading-step-row.done:not(:last-child)::before { background: #cfe0f7; }
+        .loading-step-icon { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: all .25s ease; margin-top: 1px; }
+        .loading-step-icon.pending { border: 2px solid #eee; background: #fff; }
+        .loading-step-icon.active { border: 2px solid #e0e0e0; border-top-color: #0f52ba; animation: kct-spin 0.8s linear infinite; background: #fff; }
+        .loading-step-icon.done { background: #0f52ba; border: 2px solid #0f52ba; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; animation: kct-pop-in .25s ease; }
+        .loading-step-label { font-size: 14px; transition: color .2s ease; line-height: 1.4; padding-top: 1px; }
+        .loading-step-label.pending { color: #bbb; font-weight: 500; }
+        .loading-step-label.active { color: #222; font-weight: 600; }
+        .loading-step-label.done { color: #888; font-weight: 500; }
+        .loading-footnote { margin-top: 18px; padding-top: 14px; border-top: 1px solid #f0f0f0; font-size: 12px; color: #999; line-height: 1.5; display: flex; align-items: center; gap: 6px; }
+        .loading-footnote svg { width: 13px; height: 13px; flex-shrink: 0; stroke: #ccc; }
     }
     </style>
 </head>
@@ -640,11 +702,21 @@
 
 <!-- 모달 팝업 6: 제출 중 로딩 안내 -->
 <div class="modal-overlay" id="loadingModal">
-    <div class="alert-box" style="display:flex;align-items:center;gap:16px;">
-        <div style="width:28px;height:28px;flex-shrink:0;border:3px solid #e0e0e0;border-top-color:#0f52ba;border-radius:50%;animation:kct-spin 0.8s linear infinite;"></div>
-        <div>
-            <div style="font-weight:600;margin-bottom:4px;">잠시만 기다려 주세요</div>
-            <div id="loadingModalMsg" style="color:#555;font-size:13px;">등록 중...</div>
+    <div class="alert-box loading-card" style="width:400px;">
+        <div class="loading-top-bar" id="loadingProgressBar"></div>
+        <div style="font-weight:600;margin-bottom:6px;font-size:18px;color:#222;">신청서를 등록하고 있어요</div>
+        <div class="loading-subtitle">잠시만 화면을 유지해주세요</div>
+        <div id="loadingStepUpload" class="loading-step-row">
+            <div class="loading-step-icon" id="loadingStepUploadIcon"></div>
+            <div class="loading-step-label" id="loadingStepUploadLabel">파일 업로드 중...</div>
+        </div>
+        <div id="loadingStepSubmit" class="loading-step-row">
+            <div class="loading-step-icon" id="loadingStepSubmitIcon"></div>
+            <div class="loading-step-label" id="loadingStepSubmitLabel">신청서 등록</div>
+        </div>
+        <div class="loading-footnote">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            파일 크기가 크면 시간이 더 걸릴 수 있어요.
         </div>
     </div>
 </div>
@@ -1331,10 +1403,41 @@
     }
 
     // 제출 중 사용자가 창을 닫거나 나가버리는 것을 막기 위한 로딩 안내 팝업
-    function showLoadingModal(message) {
-        document.getElementById('loadingModalMsg').innerText = message || '등록 중...';
+    // (단계별 체크리스트: 업로드할 파일이 없는 유형은 "파일 업로드" 단계 자체를 생략)
+    function setLoadingStep(rowEl, iconEl, labelEl, state, text) {
+        rowEl.className = 'loading-step-row' + (state === 'done' ? ' done' : '');
+        iconEl.className = 'loading-step-icon ' + state;
+        labelEl.className = 'loading-step-label ' + state;
+        iconEl.innerHTML = state === 'done'
+            ? '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="11" height="11"><polyline points="20 6 9 17 4 12"/></svg>'
+            : '';
+        if (text) labelEl.innerText = text;
+    }
+
+    function setLoadingProgress(percent) {
+        document.getElementById('loadingProgressBar').style.setProperty('--progress', percent + '%');
+    }
+
+    function showLoadingModal(hasFiles) {
+        const uploadRow = document.getElementById('loadingStepUpload');
+        uploadRow.style.display = hasFiles ? 'flex' : 'none';
+        if (hasFiles) {
+            setLoadingStep(uploadRow, document.getElementById('loadingStepUploadIcon'), document.getElementById('loadingStepUploadLabel'), 'active', '파일 업로드 중...');
+            setLoadingStep(document.getElementById('loadingStepSubmit'), document.getElementById('loadingStepSubmitIcon'), document.getElementById('loadingStepSubmitLabel'), 'pending', '신청서 등록');
+            setLoadingProgress(30);
+        } else {
+            setLoadingStep(document.getElementById('loadingStepSubmit'), document.getElementById('loadingStepSubmitIcon'), document.getElementById('loadingStepSubmitLabel'), 'active', '신청서 등록 중...');
+            setLoadingProgress(60);
+        }
         document.getElementById('loadingModal').style.display = 'flex';
     }
+
+    function advanceLoadingModalToSubmit() {
+        setLoadingStep(document.getElementById('loadingStepUpload'), document.getElementById('loadingStepUploadIcon'), document.getElementById('loadingStepUploadLabel'), 'done', '파일 업로드 완료');
+        setLoadingStep(document.getElementById('loadingStepSubmit'), document.getElementById('loadingStepSubmitIcon'), document.getElementById('loadingStepSubmitLabel'), 'active', '신청서 등록 중...');
+        setLoadingProgress(75);
+    }
+
     function hideLoadingModal() {
         document.getElementById('loadingModal').style.display = 'none';
     }
@@ -1666,7 +1769,8 @@
         const submitBtn = document.getElementById('submitBtn');
         const originalBtnText = submitBtn.innerText;
         submitBtn.disabled = true;
-        showLoadingModal('등록 중...');
+        const hasFiles = (isImgRequired && uploadedImgFile) || (isItemHlRequired && uploadedThumbFile);
+        showLoadingModal(hasFiles);
 
         // 이미지 업로드(uploadFiles)와 스냅샷 저장(submitWithSnapshot)이 같은 폴더를
         // 가리키도록, 이번 신청 1건에서 공통으로 쓸 이름(폴더명 = 스냅샷 파일명)을 미리 정해둔다.
@@ -1685,7 +1789,6 @@
             }
             if (filesToUpload.length > 0) {
                 submitBtn.innerText = '파일 업로드 중...';
-                document.getElementById('loadingModalMsg').innerText = '파일 업로드 중...';
                 const urls = await uploadFilesToDrive(filesToUpload, submissionStem);
                 finalImageUrl = urls.image || '';
                 finalThumbUrl = urls.thumb || '';
@@ -1698,7 +1801,7 @@
         }
 
         submitBtn.innerText = '신청서 등록 중...';
-        document.getElementById('loadingModalMsg').innerText = '신청서 등록 중...';
+        advanceLoadingModalToSubmit();
 
         const formData = {
             id: Date.now(),
