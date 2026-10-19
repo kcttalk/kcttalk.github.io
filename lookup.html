@@ -328,8 +328,6 @@
     // ===================== 설정 =====================
     const WORKER_URL = "https://kct-lookup-proxy.hbyaang.workers.dev/"; // Cloudflare Worker 배포 URL로 교체하세요 (조회 전용)
     let allItems = [];
-    const MASTER_ID = "kctb2b";
-    const MASTER_PW = "1111";
     let isMasterMode = false;
 
     function escapeHtml(s) {
@@ -423,10 +421,7 @@
         loginBtnText.innerText = '조회 중...';
 
         try {
-            const isMaster = (email === MASTER_ID.toLowerCase() && senderId === MASTER_PW);
-            const url = isMaster
-                ? `${WORKER_URL}?action=listAll&password=${encodeURIComponent(senderId)}`
-                : `${WORKER_URL}?action=list&email=${encodeURIComponent(email)}&senderId=${encodeURIComponent(senderId)}`;
+            const url = `${WORKER_URL}?action=login&email=${encodeURIComponent(email)}&senderId=${encodeURIComponent(senderId)}`;
             const res = await fetch(url);
             const data = await res.json();
 
@@ -436,7 +431,7 @@
                 return;
             }
 
-            isMasterMode = isMaster;
+            isMasterMode = !!data.isMaster;
             currentEmail = email;
             currentSenderId = senderId;
             showResults(senderId, data.items || []);
@@ -462,9 +457,7 @@
         const started = Date.now();
 
         try {
-            const url = isMasterMode
-                ? `${WORKER_URL}?action=listAll&password=${encodeURIComponent(currentSenderId)}`
-                : `${WORKER_URL}?action=list&email=${encodeURIComponent(currentEmail)}&senderId=${encodeURIComponent(currentSenderId)}`;
+            const url = `${WORKER_URL}?action=login&email=${encodeURIComponent(currentEmail)}&senderId=${encodeURIComponent(currentSenderId)}`;
             const res = await fetch(url);
             const data = await res.json();
 
